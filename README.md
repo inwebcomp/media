@@ -25,7 +25,7 @@ You are ready to go!
 ## Usage
 Add trait to your model (InWeb\Base\Entity)
 ```
-use WithImages;
+use InWeb\Media\WithImages;
 ```
 For thimbnails implement method:
 ```
@@ -46,7 +46,7 @@ public function getImageThumbnails()
 }
 ```
 
-Thumbnail class get 2 parameters:
+Thumbnail class receives 2 parameters:
 1. Closure with _\Intervention\Image\Image_ object
 2. Boolean - Only for main image (default - **false**)
 
