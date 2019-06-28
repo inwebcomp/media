@@ -34,7 +34,7 @@ trait WithImages
             $instance->newQuery(), $this, $instance->getTable() . '.' . $foreignKey, $localKey
         ))->setObject($this)->where([
             'model' => get_class($this)
-        ])->orderBy('id');
+        ])->orderBy('main', 'desc')->orderBy('id');
 
 //        if ($this->images !== null)
 //            return $this->images;
