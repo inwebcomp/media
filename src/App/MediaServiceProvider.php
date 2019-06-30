@@ -33,8 +33,6 @@ class MediaServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->registerPublishing();
         }
-
-        $router->aliasMiddleware('admin-auth', AdminAccess::class);
     }
 
     /**
@@ -54,7 +52,7 @@ class MediaServiceProvider extends ServiceProvider
      */
     protected function registerResources()
     {
-        $this->loadMigrationsFrom(self::$packagePath . 'database/migrations');
+        $this->loadMigrationsFrom(self::$packagePath . 'src/database/migrations');
 
         if ($this->app->runningInConsole()) {
             $this->app->make(EloquentFactory::class)->load(self::$packagePath . 'src/database/factories');

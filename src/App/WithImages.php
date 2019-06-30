@@ -35,18 +35,6 @@ trait WithImages
         ))->setObject($this)->where([
             'model' => get_class($this)
         ])->orderBy('main', 'desc')->orderBy('id');
-
-//        if ($this->images !== null)
-//            return $this->images;
-//
-//        $this->images = (new Images(
-//            Image::where([
-//                'object_id' => $this->id,
-//                'model'     => get_class($this)
-//            ])->get()
-//        ))->setObject($this);
-//
-//        return $this->images;
     }
 
     public function hasImages()

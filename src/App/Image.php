@@ -2,10 +2,10 @@
 
 namespace InWeb\Media;
 
-use App\Models\Entity;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use InWeb\Admin\App\Models\Entity;
 
 /**
  * @property string     filename
