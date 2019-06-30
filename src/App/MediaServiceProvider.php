@@ -33,8 +33,6 @@ class MediaServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->registerPublishing();
         }
-
-        $router->aliasMiddleware('admin-auth', AdminAccess::class);
     }
 
     /**
