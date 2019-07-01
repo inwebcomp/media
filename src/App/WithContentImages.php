@@ -2,7 +2,7 @@
 
 namespace InWeb\Media;
 
-use App\Models\Entity;
+use InWeb\Base\Entity;
 
 trait WithContentImages
 {

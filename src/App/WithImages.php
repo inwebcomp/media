@@ -2,8 +2,8 @@
 
 namespace InWeb\Media;
 
-use App\Models\Entity;
 use Intervention\Image\Exception\NotFoundException;
+use InWeb\Base\Entity;
 
 trait WithImages
 {
