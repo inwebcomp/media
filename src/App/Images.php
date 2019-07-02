@@ -2,7 +2,7 @@
 
 namespace InWeb\Media;
 
-use App\Models\Entity;
+use InWeb\Base\Entity;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;

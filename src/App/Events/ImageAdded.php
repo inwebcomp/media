@@ -11,7 +11,7 @@ class ImageAdded
     public $image;
 
     /**
-     * @param \App\Models\Image $image
+     * @param \InWeb\Media\Image $image
      */
     public function __construct($image)
     {
