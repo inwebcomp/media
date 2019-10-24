@@ -101,11 +101,11 @@ class Image extends Entity
         return $image;
     }
 
-    public function instanceForModify()
+    public function instanceForModify($type = 'original')
     {
         $disk = Storage::disk('public');
 
-        $imageSource = $disk->path($this->getPath());
+        $imageSource = $disk->path($this->getPath($type));
 
         return \Image::make($imageSource);
     }
