@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use InWeb\Media\Events\ImageAdded;
+use InWeb\Media\Events\PaymentCreated;
 use InWeb\Media\Events\ImageRemoved;
 
 class Images extends HasMany
@@ -122,7 +122,7 @@ class Images extends HasMany
             $image->createThumbnails();
         }
 
-        event(new ImageAdded($image));
+        event(new PaymentCreated($image));
 
         return $image;
     }
