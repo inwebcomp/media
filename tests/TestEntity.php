@@ -2,9 +2,9 @@
 
 namespace InWeb\Media\Tests;
 
-use App\Models\Entity;
 use Intervention\Image\Constraint;
 use Intervention\Image\Image;
+use InWeb\Base\Entity;
 use InWeb\Media\Thumbnail;
 use InWeb\Media\WithImages;
 

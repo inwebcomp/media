@@ -31,10 +31,10 @@ trait WithImages
         $localKey = $this->getKeyName();
 
         return (new Images(
-            $instance->newQuery(), $this, $instance->getTable() . '.' . $foreignKey, $localKey
-        ))->setObject($this)->where([
+            $instance->newQuery(), $this, 'model', $foreignKey, $localKey
+        ))->with('object')->setObject($this)->where([
             'model' => get_class($this)
-        ])->orderBy('main', 'desc')->orderBy('id');
+        ])->orderBy('position');
     }
 
     public function hasImages()

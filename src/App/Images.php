@@ -2,16 +2,17 @@
 
 namespace InWeb\Media;
 
-use InWeb\Base\Entity;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use InWeb\Base\Entity;
 use InWeb\Media\Events\ImageAdded;
 use InWeb\Media\Events\ImageRemoved;
 
-class Images extends HasMany
+class Images extends MorphMany
 {
     /**
      * @var WithImages|Entity
@@ -20,7 +21,7 @@ class Images extends HasMany
     private $clonedObject;
 
     /**
-     * @return null|WithImages|Entity
+     * @return null|WithImages|Entity|Model
      */
     public function getObject()
     {
@@ -37,17 +38,17 @@ class Images extends HasMany
 
         return $this;
     }
-
-    public function getResults()
-    {
-        if (! $this->clonedObject)
-            $this->clonedObject = clone $this->getObject();
-
-        return parent::getResults()->map(function (Image $image) {
-            $image->setRelation('object', $this->clonedObject);
-            return $image;
-        });
-    }
+//
+//    public function getResults()
+//    {
+//        if (! $this->clonedObject)
+//            $this->clonedObject = clone $this->getObject();
+//
+//        return parent::getResults()->map(function (Image $image) {
+//            $image->setRelation('object', $this->clonedObject);
+//            return $image;
+//        });
+//    }
 
     /**
      * Match the eagerly loaded results to their many parents.

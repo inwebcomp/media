@@ -12,7 +12,6 @@ class ImageTest extends ImageTestCase
 {
     use DatabaseMigrations;
 
-
     /** @test */
     public function can_create_image_from_file()
     {

@@ -14,25 +14,30 @@ use Illuminate\Database\Eloquent\Model;
  */
 trait BindedToModelAndObject
 {
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     * @throws ModelIsNotBinded
-     */
     public function object()
     {
-        if (! $this->model)
-            throw new ModelIsNotBinded('Param is without binded model');
-
-        return $this->belongsTo($this->model, 'object_id');
+        return $this->morphTo(null, 'model', 'object_id');
     }
 
-    public function getObjectAttribute()
-    {
-        if (! $this->binded())
-            return null;
+//    /**
+//     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+//     * @throws ModelIsNotBinded
+//     */
+//    public function object()
+//    {
+//        if (! $this->model)
+//            throw new ModelIsNotBinded('Param is without binded model');
+//
+//        return $this->belongsTo($this->model, 'object_id');
+//    }
 
-        return $this->object()->withoutGlobalScopes()->getResults();
-    }
+//    public function getObjectAttribute()
+//    {
+//        if (! $this->binded())
+//            return null;
+//
+//        return $this->object()->withoutGlobalScopes()->getResults();
+//    }
 
     public function binded()
     {
@@ -41,7 +46,7 @@ trait BindedToModelAndObject
 
     public function bindedToModel()
     {
-        return $this->model != '';
+        return $this->getMorphClass();
     }
 
     public function bindedToObject()

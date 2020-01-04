@@ -5,21 +5,26 @@ namespace InWeb\Media;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use InWeb\Admin\App\Models\Entity;
+use InWeb\Base\Entity;
+use InWeb\Base\Traits\Positionable;
+use Spatie\EloquentSortable\Sortable;
 
 /**
  * @property string     filename
  * @property boolean    main
  * @property WithImages object
  */
-class Image extends Entity
+class Image extends Entity implements Sortable
 {
-    use BindedToModelAndObject;
+    use BindedToModelAndObject,
+        Positionable;
+
     /**
      * @var UploadedFile|null
      */
     protected $instance;
     protected $appends = ['url'];
+
     protected $casts = [
         'main' => 'boolean'
     ];
@@ -305,6 +310,6 @@ class Image extends Entity
 
     public function isMain()
     {
-        return (bool) $this->main;
+        return $this->main == true;
     }
 }
