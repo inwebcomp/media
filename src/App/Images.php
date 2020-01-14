@@ -2,13 +2,13 @@
 
 namespace InWeb\Media;
 
-use InWeb\Base\Entity;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use InWeb\Media\Events\PaymentCreated;
+use InWeb\Base\Entity;
+use InWeb\Media\Events\ImageAdded;
 use InWeb\Media\Events\ImageRemoved;
 
 class Images extends HasMany
@@ -122,7 +122,7 @@ class Images extends HasMany
             $image->createThumbnails();
         }
 
-        event(new PaymentCreated($image));
+        event(new ImageAdded($image));
 
         return $image;
     }
@@ -131,7 +131,6 @@ class Images extends HasMany
      * @param array $images
      * @param bool  $createThumbnails
      * @return array
-     * @throws Exceptions\ModelIsNotBinded
      * @throws FileNotFoundException
      */
     public function addMany($images, $createThumbnails = true)
@@ -148,7 +147,6 @@ class Images extends HasMany
     /**
      * @param $image
      * @return Image
-     * @throws Exceptions\ModelIsNotBinded
      * @throws FileNotFoundException
      */
     public function set($image)
