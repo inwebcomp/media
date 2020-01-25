@@ -4,7 +4,7 @@ namespace InWeb\Media\Tests\Unit;
 
 use Event;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
-use InWeb\Media\Events\ImageAdded;
+use InWeb\Media\Events\PaymentCreated;
 use InWeb\Media\Events\ImageRemoved;
 use InWeb\Media\Tests\ImageTestCase;
 
@@ -412,7 +412,7 @@ class ImagesTest extends ImageTestCase
 
         [, $image] = self::createAttachedImage();
 
-        Event::assertDispatched(ImageAdded::class, function ($e) use ($image) {
+        Event::assertDispatched(PaymentCreated::class, function ($e) use ($image) {
             return $e->image->id === $image->id;
         });
     }

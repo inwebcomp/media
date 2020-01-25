@@ -12,7 +12,7 @@ use InWeb\Base\Entity;
 use InWeb\Media\Events\ImageAdded;
 use InWeb\Media\Events\ImageRemoved;
 
-class Images extends MorphMany
+class Images extends HasMany
 {
     /**
      * @var WithImages|Entity
