@@ -132,7 +132,6 @@ class Images extends HasMany
      * @param array $images
      * @param bool  $createThumbnails
      * @return array
-     * @throws Exceptions\ModelIsNotBinded
      * @throws FileNotFoundException
      */
     public function addMany($images, $createThumbnails = true)
@@ -149,7 +148,6 @@ class Images extends HasMany
     /**
      * @param $image
      * @return Image
-     * @throws Exceptions\ModelIsNotBinded
      * @throws FileNotFoundException
      */
     public function set($image)
