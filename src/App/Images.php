@@ -38,17 +38,17 @@ class Images extends MorphMany
 
         return $this;
     }
-//
-//    public function getResults()
-//    {
-//        if (! $this->clonedObject)
-//            $this->clonedObject = clone $this->getObject();
-//
-//        return parent::getResults()->map(function (Image $image) {
-//            $image->setRelation('object', $this->clonedObject);
-//            return $image;
-//        });
-//    }
+
+    public function getResults()
+    {
+        if (! $this->clonedObject)
+            $this->clonedObject = clone $this->getObject();
+
+        return parent::getResults()->map(function (Image $image) {
+            $image->setRelation('object', $this->clonedObject);
+            return $image;
+        });
+    }
 
     /**
      * Match the eagerly loaded results to their many parents.
@@ -132,7 +132,6 @@ class Images extends MorphMany
      * @param array $images
      * @param bool  $createThumbnails
      * @return array
-     * @throws Exceptions\ModelIsNotBinded
      * @throws FileNotFoundException
      */
     public function addMany($images, $createThumbnails = true)
@@ -149,7 +148,6 @@ class Images extends MorphMany
     /**
      * @param $image
      * @return Image
-     * @throws Exceptions\ModelIsNotBinded
      * @throws FileNotFoundException
      */
     public function set($image)
