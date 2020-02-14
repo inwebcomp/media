@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
-use InWeb\Media\Image;
+use InWeb\Media\Images\Image;
 
 class CreateImagesTable extends Migration
 {
