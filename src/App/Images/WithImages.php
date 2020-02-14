@@ -5,6 +5,11 @@ namespace InWeb\Media\Images;
 use Intervention\Image\Exception\NotFoundException;
 use InWeb\Base\Entity;
 
+/**
+ * Trait WithImages
+ * @property Images images
+ * @package InWeb\Media\Images
+ */
 trait WithImages
 {
     protected static function bootWithImages()
