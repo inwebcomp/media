@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use InWeb\Base\Entity;
-use InWeb\Base\Exceptions\ModelIsNotBinded;
 use InWeb\Media\Events\VideoAdded;
 use InWeb\Media\Events\VideoRemoved;
 

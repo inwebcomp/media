@@ -13,6 +13,7 @@ use Spatie\EloquentSortable\Sortable;
 /**
  * @property string filename
  * @property boolean main
+ * @property string mimeType
  * @property WithVideos|Entity object
  */
 class Video extends Entity implements Sortable
@@ -128,7 +129,7 @@ class Video extends Entity implements Sortable
         if ($url = $this->getOriginal('url'))
             return $preparedForEmbed ? $this->prepareForEmbed($url) : $url;
 
-        return static::url($this->getPath($type));
+        return static::url($this->getPath());
     }
 
     public function remove()
@@ -180,17 +181,15 @@ class Video extends Entity implements Sortable
         if ($this->isMain())
             return;
 
-        $mainImage = $this->object->mainImage();
+        $mainVideo = $this->object->mainVideo();
 
-        if ($mainImage) {
-            $mainImage->main = 0;
-            $mainImage->save();
-            $mainImage->removeMainThumbnails();
+        if ($mainVideo) {
+            $mainVideo->main = 0;
+            $mainVideo->save();
         }
 
         $this->main = 1;
         $this->save();
-        $this->createMainThumbnails();
     }
 
     public function isMain()
@@ -209,5 +208,10 @@ class Video extends Entity implements Sortable
             $id = substr($url, $pos + strlen($match), 11);
             return 'https://www.youtube.com/embed/' . $id;
         }
+    }
+
+    public function getMimeTypeAttribute()
+    {
+        return 'video/mp4';
     }
 }
