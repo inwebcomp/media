@@ -2,10 +2,10 @@
 
 namespace InWeb\Media\Tests\Unit;
 
-use InWeb\Media\Images;
-use InWeb\Media\Image;
-use InWeb\Media\Thumbnail;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use InWeb\Media\Images\Image;
+use InWeb\Media\Images\Images;
+use InWeb\Media\Images\Thumbnail;
 use InWeb\Media\Tests\ImageTestCase;
 
 class WithImagesTest extends ImageTestCase

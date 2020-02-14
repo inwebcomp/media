@@ -4,7 +4,7 @@ namespace InWeb\Media\Tests;
 
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
-use InWeb\Media\Image;
+use InWeb\Media\Images\Image;
 use InWeb\Media\Tests\Unit\WithImagesTest;
 use Storage;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
@@ -89,6 +89,7 @@ class ImageTestCase extends TestCase
     /**
      * @param bool $createThumbnails
      * @return array
+     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
      */
     public static function createAttachedImage($createThumbnails = false)
     {

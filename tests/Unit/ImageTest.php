@@ -4,7 +4,7 @@ namespace InWeb\Media\Tests\Unit;
 
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Http\UploadedFile;
-use InWeb\Media\Image;
+use InWeb\Media\Images\Image;
 use InWeb\Media\Tests\ImageTestCase;
 use InWeb\Media\Tests\TestEntity;
 

@@ -5,8 +5,8 @@ namespace InWeb\Media\Tests;
 use Intervention\Image\Constraint;
 use Intervention\Image\Image;
 use InWeb\Base\Entity;
-use InWeb\Media\Thumbnail;
-use InWeb\Media\WithImages;
+use InWeb\Media\Images\Thumbnail;
+use InWeb\Media\Images\WithImages;
 
 class TestEntity extends Entity
 {
