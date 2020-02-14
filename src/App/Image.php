@@ -103,6 +103,13 @@ class Image extends Entity implements Sortable
         $image->instance = $file;
         $image->filename = $filename ?: (is_string($file) ? basename($file) : $file->getClientOriginalName());
 
+        if (is_string($file)) {
+            $image->filename = preg_replace("/(^.*?\.(jpg|jpeg|png|svg|gif|webp))(.*)$/i", '$1', $image->filename);
+        }
+
+        if (strlen($image->filename) > 200)
+            $image->filename = substr($image->filename, 0, 200);
+
         return $image;
     }
 
