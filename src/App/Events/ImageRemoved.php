@@ -3,6 +3,7 @@
 namespace InWeb\Media\Events;
 
 use Illuminate\Foundation\Events\Dispatchable;
+use InWeb\Media\Images\Image;
 
 class ImageRemoved
 {
@@ -11,7 +12,7 @@ class ImageRemoved
     public $image;
 
     /**
-     * @param \InWeb\Media\Image $image
+     * @param Image $image
      */
     public function __construct($image)
     {
