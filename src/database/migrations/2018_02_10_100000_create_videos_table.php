@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use \InWeb\Media\Videos\Video;
 
 class CreateVideosTable extends Migration
 {
