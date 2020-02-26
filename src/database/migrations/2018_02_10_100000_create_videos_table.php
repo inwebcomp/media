@@ -17,14 +17,14 @@ class CreateVideosTable extends Migration
         Schema::create('videos', function (Blueprint $table) {
             $table->increments('id');
             $table->string('model');
-            $table->string('object_id');
+            $table->integer('object_id');
             $table->string('filename')->nullable();
             $table->string('url')->nullable();
             Video::positionColumn($table);
             Video::mainColumn($table);
             $table->timestamps();
 
-            $table->unique(array('model', 'object_id', 'filename'));
+            $table->unique(array('model', 'object_id', 'filename', 'position'));
         });
     }
 
