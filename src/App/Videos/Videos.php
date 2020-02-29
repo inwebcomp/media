@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use InWeb\Base\Entity;
 use InWeb\Media\Events\VideoAdded;
@@ -106,7 +107,8 @@ class Videos extends MorphMany
             $video->url = $video->getInstance();
             $video->filename = null;
         } else if (is_string($video->getInstance())) {
-            Storage::disk('public')->put($path, $this->getRemote($video->getInstance()));
+            Storage::disk('public')->createDir($video->getDir());
+            File::copy($video->getInstance(), Storage::disk('public')->path($path));
         } else {
             $video->getInstance()->storeAs($video->getDir(), $video->filename, 'public');
         }
