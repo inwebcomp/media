@@ -96,7 +96,13 @@ class Images extends MorphMany
         $image = Image::new($image, $filename);
         $image->associateWith($object);
 
-        $image->normalizeName()->setUniqueName();
+        if ($object->imagesAutoName) {
+            $autoName = $object->imageAutoName();
+        } else {
+            $autoName = false;
+        }
+
+        $image->normalizeName($autoName)->setUniqueName();
 
         if ($object->getImageThumbnail('original')) {
             $image->createThumbnail('original');
@@ -268,5 +274,10 @@ class Images extends MorphMany
     public function notMain()
     {
         return $this->where('main', '!=', '1');
+    }
+
+    public function getExtension($image)
+    {
+
     }
 }

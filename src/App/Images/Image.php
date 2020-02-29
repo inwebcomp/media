@@ -283,9 +283,10 @@ class Image extends Entity implements Sortable
     }
 
     /**
+     * @param bool $autoName
      * @return $this
      */
-    public function normalizeName()
+    public function normalizeName($autoName = false)
     {
         if (strpos($this->filename, '.') !== false) {
             $tmp = explode('.', $this->filename);
@@ -295,6 +296,9 @@ class Image extends Entity implements Sortable
             $ext = '';
             $filename = $this->filename;
         }
+
+        if ($autoName)
+            $filename = $autoName;
 
         $this->filename = Str::slug($filename) . ($ext != '' ? '.' . $ext : '');
 

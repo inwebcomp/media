@@ -2,12 +2,14 @@
 
 namespace InWeb\Media\Images;
 
+use Illuminate\Support\Str;
 use Intervention\Image\Exception\NotFoundException;
 use InWeb\Base\Entity;
 
 /**
  * Trait WithImages
  * @property Images images
+ * @property boolean imagesAutoName
  * @package InWeb\Media\Images
  */
 trait WithImages
@@ -22,6 +24,23 @@ trait WithImages
     public function getModelName()
     {
         return class_basename($this);
+    }
+
+    public function imageAutoName()
+    {
+        $result = false;
+
+        if ($this->title)
+            $result = $this->title;
+        else if ($this->slug)
+            $result = $this->slug;
+        else if ($this->name)
+            $result = $this->name;
+
+        if (! $result)
+            return $this->getKey();
+
+        return Str::slug($result);
     }
 
     /**
