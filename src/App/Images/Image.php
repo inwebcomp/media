@@ -26,6 +26,21 @@ class Image extends Entity implements Sortable
     use BindedToModelAndObject,
         Positionable;
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::updated(function ($model) {
+            $model->object::clearCache($model->object);
+        });
+        static::deleting(function ($model) {
+            $model->object::clearCache($model->object);
+        });
+        static::created(function ($model) {
+            $model->object::clearCache($model->object);
+        });
+    }
+
     /**
      * @var UploadedFile|null
      */
