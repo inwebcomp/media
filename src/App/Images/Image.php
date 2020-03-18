@@ -10,6 +10,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use InWeb\Base\Contracts\Cacheable;
 use InWeb\Base\Entity;
 use InWeb\Base\Traits\Positionable;
 use InWeb\Media\BindedToModelAndObject;
@@ -31,13 +32,16 @@ class Image extends Entity implements Sortable
         parent::boot();
 
         static::updated(function ($model) {
-            $model->object::clearCache($model->object);
+            if ($model->object instanceof Cacheable)
+                $model->object::clearCache($model->object);
         });
         static::deleting(function ($model) {
-            $model->object::clearCache($model->object);
+            if ($model->object instanceof Cacheable)
+                $model->object::clearCache($model->object);
         });
         static::created(function ($model) {
-            $model->object::clearCache($model->object);
+            if ($model->object instanceof Cacheable)
+                $model->object::clearCache($model->object);
         });
     }
 
