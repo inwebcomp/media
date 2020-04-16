@@ -217,7 +217,7 @@ class Image extends Entity implements Sortable
         $thumb->save(
             $disk->path($this->getPath($name)),
             $thumbnail->getQuality(),
-            $thumbnail->getFormat(),
+            $thumbnail->getFormat()
         );
 
         return $thumb;
