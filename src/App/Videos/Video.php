@@ -4,6 +4,8 @@ namespace InWeb\Media\Videos;
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use InWeb\Base\Entity;
 use InWeb\Base\Traits\Positionable;
 use InWeb\Media\BindedToModelAndObject;
@@ -202,16 +204,36 @@ class Video extends Entity implements Sortable
         return ! $this->getOriginal('url');
     }
 
+    public function isEmbed()
+    {
+        return strpos($this->getUrl(true), 'https://www.youtube.com/embed/') !== false;
+    }
+
     public function prepareForEmbed($url)
     {
         if ($match = 'youtube.com/watch?v=' and ($pos = strpos($url, $match)) !== false) {
             $id = substr($url, $pos + strlen($match), 11);
             return 'https://www.youtube.com/embed/' . $id;
         }
+
+        return $url;
     }
 
     public function getMimeTypeAttribute()
     {
-        return 'video/mp4';
+        if ($this->isLocal())
+            return Storage::disk('public')->mimeType($this->getPath());
+
+        $tmp = explode('.', $this->getUrl(true));
+        $extension = end($tmp);
+
+        if ($extension == 'mp4')
+            return 'video/mp4';
+        else if ($extension == 'webm')
+            return 'video/webm';
+        else if ($extension == 'mpeg')
+            return 'video/mpeg';
+
+        return null;
     }
 }
