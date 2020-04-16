@@ -53,10 +53,10 @@ class Images extends MorphMany
     /**
      * Match the eagerly loaded results to their many parents.
      *
-     * @param  array      $models
+     * @param  array $models
      * @param  Collection $results
-     * @param  string     $relation
-     * @param  string     $type
+     * @param  string $relation
+     * @param  string $type
      * @return array
      */
     protected function matchOneOrMany(array $models, Collection $results, $relation, $type)
@@ -83,60 +83,61 @@ class Images extends MorphMany
 
     /**
      * @param UploadedFile|string $image
-     * @param bool                $createThumbnails
-     * @param null|string         $filename
+     * @param bool $createThumbnails
+     * @param null|string $filename
      * @return Image
-     * @throws Exceptions\ModelIsNotBinded
-     * @throws FileNotFoundException
+     * @throws \Throwable
      */
     public function add($image, $createThumbnails = true, $filename = null)
     {
         $object = $this->getObject();
 
-        $image = Image::new($image, $filename);
-        $image->associateWith($object);
+        $image = \DB::transaction(function () use ($object, $image, $createThumbnails, $filename) {
+            $image = Image::new($image, $filename);
+            $image->associateWith($object);
 
-        if ($object->imagesAutoName) {
-            $autoName = $object->imageAutoName($image);
-        } else {
-            $autoName = false;
-        }
-
-        $image->normalizeName($autoName)->setUniqueName();
-
-        if ($object->getImageThumbnail('original')) {
-            $image->createThumbnail('original');
-        } else {
-            $path = $image->getDir() . DIRECTORY_SEPARATOR . $image->filename;
-            if ($image->isBase64()) {
-                Storage::disk('public')->createDir($image->getDir());
-                Storage::disk('public')->put($path, base64_decode($image->getInstance()));
-            } else if (is_string($image->getInstance())) {
-                Storage::disk('public')->put($path, $this->getRemote($image->getInstance()));
+            if ($object->imagesAutoName) {
+                $autoName = $object->imageAutoName($image);
             } else {
-                $image->getInstance()->storeAs($image->getDir(), $image->filename, 'public');
+                $autoName = false;
             }
-        }
 
-        if (! $object->fresh()->hasImages())
-            $image->main = 1;
+            $image->normalizeName($autoName)->setUniqueName();
 
-        $image->save();
+            if ($object->getImageThumbnail('original')) {
+                $image->createThumbnail('original');
+            } else {
+                $path = $image->getDir() . DIRECTORY_SEPARATOR . $image->filename;
+                if ($image->isBase64()) {
+                    Storage::disk('public')->createDir($image->getDir());
+                    Storage::disk('public')->put($path, base64_decode($image->getInstance()));
+                } else if (is_string($image->getInstance())) {
+                    Storage::disk('public')->put($path, $this->getRemote($image->getInstance()));
+                } else {
+                    $image->getInstance()->storeAs($image->getDir(), $image->filename, 'public');
+                }
+            }
 
-//        $this->push($image);
+            if ($createThumbnails) {
+                $image->createThumbnails();
+            }
 
-        if ($createThumbnails) {
-            $image->createThumbnails();
-        }
+            event(new ImageAdded($image));
 
-        event(new ImageAdded($image));
+            if (! $object->fresh()->hasImages())
+                $image->main = 1;
+
+            $image->save();
+
+            return $image;
+        });
 
         return $image;
     }
 
     /**
      * @param array $images
-     * @param bool  $createThumbnails
+     * @param bool $createThumbnails
      * @return array
      * @throws FileNotFoundException
      */
