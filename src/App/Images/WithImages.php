@@ -26,7 +26,7 @@ trait WithImages
         return class_basename($this);
     }
 
-    public function imageAutoName()
+    public function imageAutoName(Image $image = null)
     {
         $result = false;
 

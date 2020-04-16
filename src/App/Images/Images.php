@@ -97,7 +97,7 @@ class Images extends MorphMany
         $image->associateWith($object);
 
         if ($object->imagesAutoName) {
-            $autoName = $object->imageAutoName();
+            $autoName = $object->imageAutoName($image);
         } else {
             $autoName = false;
         }
