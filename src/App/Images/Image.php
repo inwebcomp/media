@@ -211,10 +211,13 @@ class Image extends Entity implements Sortable
 
         $image = \Image::make($imageSource);
 
+        /** @var \Intervention\Image\Image $thumb */
         $thumb = $function($image, $object);
 
         $thumb->save(
-            $disk->path($this->getPath($name))
+            $disk->path($this->getPath($name)),
+            $thumbnail->getQuality(),
+            $thumbnail->getFormat(),
         );
 
         return $thumb;
