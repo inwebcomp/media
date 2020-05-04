@@ -2,6 +2,8 @@
 
 namespace InWeb\Media\Images;
 
+use InWeb\Base\Entity;
+
 /**
  * Class Thumbnail
  * @package InWeb\Media
@@ -23,6 +25,11 @@ class Thumbnail
      * @var string|null
      */
     private $format;
+
+    /**
+     * @var \Closure
+     */
+    public $createIfClosure;
 
     public function __construct($modifier, $onlyForMain = false)
     {
@@ -84,5 +91,21 @@ class Thumbnail
     public function getFormat()
     {
         return $this->format;
+    }
+
+    public function shouldCreateThumbnail(Entity $object, Image $image)
+    {
+        if ($this->createIfClosure and is_callable($this->createIfClosure)) {
+            return call_user_func($this->createIfClosure, $object, $image);
+        }
+
+        return true;
+    }
+
+    public function createIf(\Closure $closure)
+    {
+        $this->createIfClosure = $closure;
+
+        return $this;
     }
 }

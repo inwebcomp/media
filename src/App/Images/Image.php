@@ -179,9 +179,12 @@ class Image extends Entity implements Sortable
     {
         $this->assertThumbnailExists($name);
 
-        /** @var WithImages $object */
+        /** @var WithImages|Entity $object */
         $object = $this->object;
         $thumbnail = $object->getImageThumbnail($name);
+
+        if (! $thumbnail->shouldCreateThumbnail($object, $this))
+            return false;
 
         if ($thumbnail->isOnlyForMain() and ! $this->isMain())
             return false;
