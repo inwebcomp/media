@@ -118,16 +118,16 @@ class Images extends MorphMany
                 }
             }
 
+            if (! $object->fresh()->hasImages())
+                $image->main = 1;
+
+            $image->save();
+
             if ($createThumbnails) {
                 $image->createThumbnails();
             }
 
             event(new ImageAdded($image));
-
-            if (! $object->fresh()->hasImages())
-                $image->main = 1;
-
-            $image->save();
 
             return $image;
         });
