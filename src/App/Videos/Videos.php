@@ -87,7 +87,6 @@ class Videos extends MorphMany
      * @param UploadedFile|string $video
      * @param null|string $filename
      * @return Video
-     * @throws FileNotFoundException
      */
     public function add($video, $filename = null)
     {
@@ -121,6 +120,66 @@ class Videos extends MorphMany
         event(new VideoAdded($video));
 
         return $video;
+    }
+
+    /**
+     * @param UploadedFile $video
+     * @param bool $last
+     * @param null|string $filename
+     * @return Video
+     */
+    public function addChunked($video, $last = false, $filename = null)
+    {
+        /** @var \Storage $disk */
+        $disk = \Storage::disk('public');
+
+        $object = $this->getObject();
+
+        $video = call_user_func([$object->videoModel(), 'new'], $video, $filename);
+        $video->associateWith($object);
+
+        $chunksDirectory = $video->getDir('_chunks');
+
+        $disk->makeDirectory($chunksDirectory);
+
+        $path = $chunksDirectory . DIRECTORY_SEPARATOR . $video->filename;
+
+        try {
+            File::append($disk->path($path), $video->getInstance()->get(), '');
+
+            if ($last) {
+                $name = basename($path, '.part');
+                $name = $video::getUniqueName($video::getNormalizedName($name), get_class($object), $video->object_id);
+
+                $finalPath = $video->getDir() . DIRECTORY_SEPARATOR . $name;
+
+                if ($disk->exists($finalPath)) {
+                    $disk->delete($finalPath);
+                }
+
+                $disk->move($path, $finalPath);
+
+                if (! $object->fresh()->hasVideos())
+                    $video->main = 1;
+
+                $video->filename = $name;
+                $video->save();
+
+                event(new VideoAdded($video));
+
+                $disk->deleteDir($chunksDirectory);
+
+                return $video;
+            }
+        } catch (\Exception $exception) {
+            if ($disk->exists($path)) {
+                $disk->delete($path);
+            }
+
+            throw new $exception;
+        }
+
+        return null;
     }
 
     /**

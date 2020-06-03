@@ -6,6 +6,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use InWeb\Base\Entity;
 use InWeb\Base\Traits\Positionable;
 use InWeb\Media\BindedToModelAndObject;
@@ -121,6 +122,11 @@ class Video extends Entity implements Sortable
         return $this->object->getVideoDir($type);
     }
 
+    public function getChunksDirectory()
+    {
+        return $this->getDir('_chunks');
+    }
+
     public function getPath($type = 'original')
     {
         return $this->getDir($type) . '/' . $this->filename;
@@ -144,18 +150,27 @@ class Video extends Entity implements Sortable
      */
     public function normalizeName()
     {
-        if (strpos($this->filename, '.') !== false) {
-            $tmp = explode('.', $this->filename);
-            $ext = array_pop($tmp);
-            $filename = implode('.', $tmp);
-        } else {
-            $ext = '';
-            $filename = $this->filename;
-        }
-
-        $this->filename = str_slug($filename) . ($ext != '' ? '.' . $ext : '');
+        $this->filename = static::getNormalizedName($this->filename);
 
         return $this;
+    }
+
+    /**
+     * @param string $filename
+     * @return string
+     */
+    public static function getNormalizedName($filename)
+    {
+        if (strpos($filename, '.') !== false) {
+            $tmp = explode('.', $filename);
+            $ext = array_pop($tmp);
+            $result = implode('.', $tmp);
+        } else {
+            $ext = '';
+            $result = $filename;
+        }
+
+        return Str::slug($result) . ($ext != '' ? '.' . $ext : '');
     }
 
     public function isBase64()
