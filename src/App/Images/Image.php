@@ -5,6 +5,7 @@ namespace InWeb\Media\Images;
 use Closure;
 use Exception;
 use File;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
@@ -19,6 +20,7 @@ use Spatie\EloquentSortable\Sortable;
 /**
  * @property string filename
  * @property boolean main
+ * @property null|string type
  * @property null|string language
  * @property string path
  * @property WithImages|Model object
@@ -190,6 +192,9 @@ class Image extends Entity implements Sortable
         if ($thumbnail->isOnlyForMain() and ! $this->isMain())
             return false;
 
+        if ($this->type and ! $thumbnail->isForType($this->type))
+            return false;
+
         $function = $modifier ?? $thumbnail->getModifier();
 
         $disk = Storage::disk('public');
@@ -359,7 +364,7 @@ class Image extends Entity implements Sortable
         if ($this->isMain())
             return;
 
-        $mainImage = $this->object->mainImage();
+        $mainImage = $this->object->mainImage($this->type);
 
         if ($mainImage) {
             $mainImage->main = 0;
@@ -370,6 +375,11 @@ class Image extends Entity implements Sortable
         $this->main = 1;
         $this->save();
         $this->createMainThumbnails();
+    }
+
+    public function isMain()
+    {
+        return $this->main == true;
     }
 
     /**
@@ -396,8 +406,8 @@ class Image extends Entity implements Sortable
         }
     }
 
-    public function isMain()
+    public function scopeType(Builder $query, $type)
     {
-        return $this->main == true;
+        return $query->where('type', $type);
     }
 }

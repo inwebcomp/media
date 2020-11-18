@@ -44,10 +44,11 @@ trait WithImages
     }
 
     /**
+     * @param string|null $type
      * @param bool $forAnyLanguage
      * @return Images
      */
-    public function images($forAnyLanguage = false)
+    public function images($type = null, $forAnyLanguage = false)
     {
         $instance = $this->newRelatedInstance(Image::class);
 
@@ -59,13 +60,18 @@ trait WithImages
             $instance->newQuery(), $this, 'model', $foreignKey, $localKey
         ))->with('object')->setObject($this)->where([
             'model' => get_class($this)
-        ])->orderBy('position');
+        ])->orderBy('position')
+          ->setType($type);
 
         if (! $forAnyLanguage) {
             $query->where(function ($q) {
                 $q->whereNull('language');
                 $q->orWhere('language', \App::getLocale());
             });
+        }
+
+        if ($type) {
+            $query->where('type', $type);
         }
 
         return $query;
@@ -107,21 +113,21 @@ trait WithImages
     }
 
     /**
-     * @param string $type
+     * @param string $thumbnail
      * @return Thumbnail|null
      */
-    public function getImageThumbnail($type)
+    public function getImageThumbnail($thumbnail)
     {
-        return $this->getImageThumbnails()[$type] ?? null;
+        return $this->getImageThumbnails()[$thumbnail] ?? null;
     }
 
     /**
-     * @param string $type
+     * @param string $thumbnail
      * @return bool
      */
-    public function imageThumbnailExists($type)
+    public function imageThumbnailExists($thumbnail)
     {
-        return isset($this->getImageThumbnails()[$type]);
+        return isset($this->getImageThumbnails()[$thumbnail]);
     }
 
     public function getImagesDir()
@@ -131,17 +137,17 @@ trait WithImages
 
     /**
      * @param string $image
-     * @param string $type
+     * @param string $thumbnail
      * @return string
      */
-    public function getImagePath($image, $type = 'original')
+    public function getImagePath($image, $thumbnail = 'original')
     {
-        return $this->getImageDir($type) . '/' . $image;
+        return $this->getImageDir($thumbnail) . '/' . $image;
     }
 
-    public function getImageDir($type = 'original')
+    public function getImageDir($thumbnail = 'original')
     {
-        return $this->getImagesDir() . '/' . $type;
+        return $this->getImagesDir() . '/' . $thumbnail;
     }
 
     /**
@@ -169,16 +175,26 @@ trait WithImages
 
     public function getImageAttribute()
     {
-        return optional($this->images)->first(function($image) {
+        return optional($this->images)->first(function ($image) {
             return $image->isMain();
         });
     }
 
+    public function image($type = null)
+    {
+        return optional($this->images)->first(function($image) use ($type) {
+            return $image->isMain() && (! $type or $image->type == $type);
+        });
+    }
+
     /**
+     * @param null $type
      * @return Image
      */
-    public function mainImage()
+    public function mainImage($type = null)
     {
-        return $this->images()->where('main', '=', '1')->first();
+        $query = $this->images($type)->where('main', '=', '1');
+
+        return $query->first();
     }
 }

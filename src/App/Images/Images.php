@@ -18,7 +18,24 @@ class Images extends MorphMany
      * @var WithImages|Entity
      */
     protected $object;
+    /**
+     * @var WithImages|Entity
+     */
     private $clonedObject;
+    /**
+     * @var string|null
+     */
+    public $type;
+
+    /**
+     * @param string|null $value
+     * @return string|null
+     */
+    public function setType($value)
+    {
+        $this->type = $value;
+        return $this;
+    }
 
     /**
      * @return null|WithImages|Entity|Model
@@ -94,6 +111,7 @@ class Images extends MorphMany
 
         $image = \DB::transaction(function () use ($object, $image, $createThumbnails, $filename) {
             $image = Image::new($image, $filename);
+            $image->type = $this->type;
             $image->associateWith($object);
 
             if ($object->imagesAutoName) {
