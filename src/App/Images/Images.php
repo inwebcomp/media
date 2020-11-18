@@ -139,7 +139,7 @@ class Images extends MorphMany
      * @param array $images
      * @param bool $createThumbnails
      * @return array
-     * @throws FileNotFoundException
+     * @throws \Throwable
      */
     public function addMany($images, $createThumbnails = true)
     {
@@ -155,7 +155,7 @@ class Images extends MorphMany
     /**
      * @param $image
      * @return Image
-     * @throws FileNotFoundException
+     * @throws \Throwable
      */
     public function set($image)
     {

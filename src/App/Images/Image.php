@@ -19,6 +19,7 @@ use Spatie\EloquentSortable\Sortable;
 /**
  * @property string filename
  * @property boolean main
+ * @property null|string language
  * @property string path
  * @property WithImages|Model object
  */
@@ -369,6 +370,30 @@ class Image extends Entity implements Sortable
         $this->main = 1;
         $this->save();
         $this->createMainThumbnails();
+    }
+
+    /**
+     * @param $language
+     */
+    public function setLanguage($language)
+    {
+        $this->language = $language;
+        $this->save();
+
+        if ($this->object->images()->where('main', 1)->count() > 1) {
+            $this->main = false;
+            $this->save();
+        }
+
+        foreach (config('inweb.languages') as $language) {
+            if (! $this->object->imagesForLanguage($language)->where('main', 1)->count()) {
+                $image = $this->object->imagesForLanguage($language)->first();
+                if ($image) {
+                    $image->main = true;
+                    $image->save();
+                }
+            }
+        }
     }
 
     public function isMain()

@@ -44,9 +44,10 @@ trait WithImages
     }
 
     /**
+     * @param bool $forAnyLanguage
      * @return Images
      */
-    public function images()
+    public function images($forAnyLanguage = false)
     {
         $instance = $this->newRelatedInstance(Image::class);
 
@@ -54,11 +55,32 @@ trait WithImages
 
         $localKey = $this->getKeyName();
 
-        return (new Images(
+        $query = (new Images(
             $instance->newQuery(), $this, 'model', $foreignKey, $localKey
         ))->with('object')->setObject($this)->where([
             'model' => get_class($this)
         ])->orderBy('position');
+
+        if (! $forAnyLanguage) {
+            $query->where(function ($q) {
+                $q->whereNull('language');
+                $q->orWhere('language', \App::getLocale());
+            });
+        }
+
+        return $query;
+    }
+
+    /**
+     * @param string $language
+     * @return Images
+     */
+    public function imagesForLanguage($language)
+    {
+        return $this->images(true)->where(function ($q) use ($language) {
+            $q->whereNull('language');
+            $q->orWhere('language', $language);
+        });
     }
 
     public function hasImages()
@@ -77,6 +99,11 @@ trait WithImages
     public function onlyForMainImage()
     {
         return false;
+    }
+
+    public function getImageTypes()
+    {
+        return null;
     }
 
     /**
