@@ -18,6 +18,10 @@ class Thumbnail
      */
     private $onlyForMain;
     /**
+     * @var string[]|null
+     */
+    private $forTypes;
+    /**
      * @var int|null
      */
     private $quality;
@@ -51,6 +55,19 @@ class Thumbnail
     public function getModifier()
     {
         return $this->modifier;
+    }
+
+    /**
+     * @param string[]|null $types
+     */
+    public function forTypes($types)
+    {
+        $this->forTypes = $types;
+    }
+
+    public function isForType($type)
+    {
+        return in_array($type, $this->forTypes);
     }
 
     /**
