@@ -67,7 +67,7 @@ class Thumbnail
 
     public function isForType($type)
     {
-        return in_array($type, $this->forTypes);
+        return ! $this->forTypes or in_array($type, $this->forTypes);
     }
 
     /**
