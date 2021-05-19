@@ -53,6 +53,8 @@ class Image extends Entity implements Sortable
      */
     protected $instance;
     protected $appends = ['url'];
+    protected $base64;
+    protected $decodedBase64;
 
     protected $casts = [
         'main' => 'boolean'
@@ -130,6 +132,9 @@ class Image extends Entity implements Sortable
         $image = new Image();
 
         $image->instance = $file;
+
+        $image->isBase64();
+
         $image->filename = $filename ?: (is_string($file) ? basename($file) : $file->getClientOriginalName());
 
         if (is_string($file)) {
@@ -336,17 +341,29 @@ class Image extends Entity implements Sortable
         return $this;
     }
 
+    public function getBase64DecodedContent()
+    {
+        return $this->decodedBase64;
+    }
+
     public function isBase64()
     {
+        if ($this->base64 !== null)
+            return $this->base64;
+
         try {
             $decoded = base64_decode($this->getInstance(), true);
 
             if (base64_encode($decoded) === $this->getInstance()) {
+                $this->base64 = true;
+                $this->decodedBase64 = $decoded;
                 return true;
             } else {
+                $this->base64 = false;
                 return false;
             }
         } catch (Exception $e) {
+            $this->base64 = false;
             return false;
         }
     }

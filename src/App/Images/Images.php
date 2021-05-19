@@ -128,7 +128,7 @@ class Images extends MorphMany
                 $path = $image->getDir() . DIRECTORY_SEPARATOR . $image->filename;
                 if ($image->isBase64()) {
                     Storage::disk('public')->createDir($image->getDir());
-                    Storage::disk('public')->put($path, base64_decode($image->getInstance()));
+                    Storage::disk('public')->put($path, $image->getBase64DecodedContent());
                 } else if (is_string($image->getInstance())) {
                     Storage::disk('public')->put($path, $this->getRemote($image->getInstance()));
                 } else {
