@@ -134,7 +134,7 @@ class Video extends Entity implements Sortable
 
     public function getUrl($preparedForEmbed = false)
     {
-        if ($url = $this->getOriginal('url'))
+        if ($url = $this->getRawOriginal('url'))
             return $preparedForEmbed ? $this->prepareForEmbed($url) : $url;
 
         return static::url($this->getPath());
@@ -216,12 +216,22 @@ class Video extends Entity implements Sortable
 
     public function isLocal()
     {
-        return ! $this->getOriginal('url');
+        return ! $this->getRawOriginal('url');
     }
 
     public function isEmbed()
     {
         return strpos($this->getUrl(true), 'https://www.youtube.com/embed/') !== false;
+    }
+
+    public function getHostingThumbnailFromUrl($url)
+    {
+        if ($match = 'youtube.com/watch?v=' and ($pos = strpos($url, $match)) !== false) {
+            $id = substr($url, $pos + strlen($match), 11);
+            return 'https://img.youtube.com/vi/' . $id . '/maxresdefault.jpg';
+        }
+
+        return null;
     }
 
     public function prepareForEmbed($url)
