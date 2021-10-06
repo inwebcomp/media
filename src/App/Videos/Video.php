@@ -261,4 +261,35 @@ class Video extends Entity implements Sortable
 
         return null;
     }
+
+    /**
+     * @param int $frames
+     * @throws \Throwable
+     */
+    public function createFramesFromFile($frames = 4)
+    {
+        $videoPath = storage_path('app/public/' . $this->getPath());
+
+        $ffmpeg = \FFMpeg\FFMpeg::create([
+            'ffmpeg.binaries'  => config('video.ffmpeg_binaries'),
+            'ffprobe.binaries' => config('video.ffprobe_binaries'),
+            'timeout'          => 60,
+            'ffmpeg.threads'   => 16,
+        ]);
+        /** @var \FFMpeg\Media\Video $ffVideo */
+        $ffVideo = $ffmpeg->open($videoPath);
+
+        $duration = $ffVideo->getFFProbe()->format($videoPath)->get('duration');
+        $interval = ceil(($duration) / $frames);
+
+        if ($duration <= 4)
+            $interval = 1;
+
+        for ($s = 1; $s < $duration - 1; $s += $interval) {
+            $frame = $ffVideo->frame(\FFMpeg\Coordinate\TimeCode::fromSeconds($s));
+            $frame->save($path = tempnam(sys_get_temp_dir(), 'laravel_app_'));
+
+            $this->images()->add($path, true, 'image-' . $s . '.jpg');
+        }
+    }
 }
