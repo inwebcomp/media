@@ -56,6 +56,7 @@ trait WithImages
 
         $localKey = $this->getKeyName();
 
+        /** @var Images $query */
         $query = (new Images(
             $instance->newQuery(), $this, 'model', $foreignKey, $localKey
         ))->with('object')->setObject($this)->where([
@@ -94,22 +95,17 @@ trait WithImages
         return $this->images->isNotEmpty();
     }
 
+    public function getDisk()
+    {
+        return 'public';
+    }
+
     /**
      * @return Thumbnail[]
      */
     public function getImageThumbnails()
     {
         return [];
-    }
-
-    public function onlyForMainImage()
-    {
-        return false;
-    }
-
-    public function getImageTypes()
-    {
-        return null;
     }
 
     /**
@@ -195,6 +191,9 @@ trait WithImages
     {
         $query = $this->images($type)->where('main', '=', '1');
 
-        return $query->first();
+        /** @var Image $image */
+        $image = $query->first();
+
+        return $image;
     }
 }

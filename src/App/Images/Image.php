@@ -5,6 +5,8 @@ namespace InWeb\Media\Images;
 use Closure;
 use Exception;
 use File;
+use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
@@ -55,14 +57,15 @@ class Image extends Entity implements Sortable
     protected $appends = ['url'];
     protected $base64;
     protected $decodedBase64;
+    protected $disk = 'public';
 
     protected $casts = [
         'main' => 'boolean'
     ];
 
-    public static function url($path)
+    public function url($path)
     {
-        return url('storage/' . $path);
+        return $this->getStorage()->url($path);
     }
 
     public function getPathAttribute()
@@ -72,7 +75,7 @@ class Image extends Entity implements Sortable
 
     public function getUrlAttribute()
     {
-        return static::url($this->path);
+        return $this->url($this->path);
     }
 
     /**
@@ -171,6 +174,25 @@ class Image extends Entity implements Sortable
         return $this->url($this->getPath($type));
     }
 
+    public function setDisk($value)
+    {
+        $this->disk = $value;
+        return $this;
+    }
+
+    public function getDisk()
+    {
+        return $this->disk;
+    }
+
+    /**
+     * @return Filesystem
+     */
+    public function getStorage()
+    {
+        return Storage::disk($this->getDisk());
+    }
+
     public function remove()
     {
         return $this->object->images()->remove($this);
@@ -202,9 +224,9 @@ class Image extends Entity implements Sortable
 
         $function = $modifier ?? $thumbnail->getModifier();
 
-        $disk = Storage::disk('public');
+        $storage = $this->getStorage();
 
-        $disk->makeDirectory($this->getDir($name));
+        $storage->makeDirectory($this->getDir($name));
 
         if ($name == 'original' and $this->getInstance()) {
             if (is_string($this->getInstance())) {
@@ -213,13 +235,13 @@ class Image extends Entity implements Sortable
                 $imageSource = $this->getInstance()->getPathname();
             }
         } else {
-            $imageSource = $disk->path($this->getPath());
+            $imageSource = $storage->path($this->getPath());
         }
 
         $info = pathinfo($imageSource);
 
         if (isset($info['extension']) and $info['extension'] == 'svg') {
-            File::copy($imageSource, $disk->path($this->getPath($name)));
+            File::copy($imageSource, $storage->path($this->getPath($name)));
             return true;
         }
 
@@ -229,7 +251,7 @@ class Image extends Entity implements Sortable
         $thumb = $function($image, $object);
 
         $thumb->save(
-            $disk->path($this->getPath($name)),
+            $storage->path($this->getPath($name)),
             $thumbnail->getQuality(),
             $thumbnail->getFormat()
         );

@@ -80,6 +80,8 @@ class Images extends MorphMany
     {
         $dictionary = $this->buildDictionary($results);
 
+        $disk = $this->getDisk();
+
         // Once we have the dictionary we can simply spin through the parent models to
         // link them up with their children using the keyed dictionary to make the
         // matching very convenient and easy work. Then we'll just return them.
@@ -87,8 +89,9 @@ class Images extends MorphMany
             if (isset($dictionary[$key = $model->getAttribute($this->localKey)])) {
                 $model->setRelation(
                     $relation,
-                    $this->getRelationValue($dictionary, $key, $type)->map(function (Image $image) use ($model) {
+                    $this->getRelationValue($dictionary, $key, $type)->map(function (Image $image) use ($disk, $model) {
                         $image->setRelation('object', clone $model);
+                        $image->setDisk($disk);
                         return $image;
                     })
                 );
@@ -96,6 +99,19 @@ class Images extends MorphMany
         }
 
         return $models;
+    }
+
+    public function getDisk()
+    {
+        return $this->object->getDisk();
+    }
+
+    /**
+     * @return \Illuminate\Contracts\Filesystem\Filesystem
+     */
+    public function getStorage()
+    {
+        return Storage::disk($this->getDisk());
     }
 
     /**
@@ -113,6 +129,7 @@ class Images extends MorphMany
             $image = Image::new($image, $filename);
             $image->type = $this->type;
             $image->associateWith($object);
+            $image->setDisk($this->getDisk());
 
             if ($object->imagesAutoName) {
                 $autoName = $object->imageAutoName($image);
@@ -122,17 +139,19 @@ class Images extends MorphMany
 
             $image->normalizeName($autoName)->setUniqueName();
 
+            $storage = $this->getStorage();
+
             if ($object->getImageThumbnail('original')) {
                 $image->createThumbnail('original');
             } else {
                 $path = $image->getDir() . DIRECTORY_SEPARATOR . $image->filename;
                 if ($image->isBase64()) {
-                    Storage::disk('public')->createDir($image->getDir());
-                    Storage::disk('public')->put($path, $image->getBase64DecodedContent());
+                    $storage->createDir($image->getDir());
+                    $storage->put($path, $image->getBase64DecodedContent());
                 } else if (is_string($image->getInstance())) {
-                    Storage::disk('public')->put($path, $this->getRemote($image->getInstance()));
+                    $storage->put($path, $this->getRemote($image->getInstance()));
                 } else {
-                    $image->getInstance()->storeAs($image->getDir(), $image->filename, 'public');
+                    $image->getInstance()->storeAs($image->getDir(), $image->filename, $this->getDisk());
                 }
             }
 
@@ -184,7 +203,7 @@ class Images extends MorphMany
 
     public function removeAll()
     {
-        Storage::disk('public')->deleteDirectory($this->object->getImagesDir());
+        $this->getStorage()->deleteDirectory($this->object->getImagesDir());
 
         Image::where([
             'object_id' => $this->object->id,
@@ -204,7 +223,7 @@ class Images extends MorphMany
             $image = $object->getImage($image);
         }
 
-        Storage::disk('public')->delete($image->getPath());
+        $this->getStorage()->delete($image->getPath());
 
         $image->removeThumbnails();
 
@@ -230,7 +249,7 @@ class Images extends MorphMany
     {
         $this->assertThumbnailExists($name);
 
-        Storage::disk('public')->deleteDirectory($this->getObject()->getImageDir($name));
+        $this->getStorage()->deleteDirectory($this->getObject()->getImageDir($name));
     }
 
     public function removeThumbnails()
@@ -238,7 +257,7 @@ class Images extends MorphMany
         $object = $this->getObject();
 
         foreach ($object->getImageThumbnails() as $name => $modifier) {
-            Storage::disk('public')->deleteDirectory($object->getImageDir($name));
+            $this->getStorage()->deleteDirectory($object->getImageDir($name));
         }
     }
 
