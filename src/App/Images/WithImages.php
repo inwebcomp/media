@@ -10,6 +10,7 @@ use InWeb\Base\Entity;
  * Trait WithImages
  * @property Images images
  * @property boolean imagesAutoName
+ * @property Image|null image
  * @package InWeb\Media\Images
  */
 trait WithImages
@@ -169,6 +170,9 @@ trait WithImages
         return $image;
     }
 
+    /**
+     * @return Image|null
+     */
     public function getImageAttribute()
     {
         return optional($this->images)->first(function ($image) {
