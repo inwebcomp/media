@@ -152,7 +152,7 @@ class Image extends Entity implements Sortable
 
     public function instanceForModify($type = 'original')
     {
-        $imageSource = $this->getDisk()->path($this->getPath($type));
+        $imageSource = $this->getStorage()->path($this->getPath($type));
 
         return \Image::make($imageSource);
     }
@@ -287,7 +287,7 @@ class Image extends Entity implements Sortable
     {
         $this->assertThumbnailExists($name);
 
-        $this->getDisk()->delete($this->getPath($name));
+        $this->getStorage()->delete($this->getPath($name));
 
         return true;
     }
