@@ -63,6 +63,7 @@ class Images extends MorphMany
 
         return parent::getResults()->map(function (Image $image) {
             $image->setRelation('object', $this->clonedObject);
+            $image->setDisk($this->getDisk());
             return $image;
         });
     }
