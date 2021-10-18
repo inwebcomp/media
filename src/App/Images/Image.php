@@ -24,6 +24,7 @@ use Spatie\EloquentSortable\Sortable;
  * @property boolean main
  * @property null|string type
  * @property null|string language
+ * @property null|string format
  * @property string path
  * @property WithImages|Model object
  */
@@ -57,11 +58,16 @@ class Image extends Entity implements Sortable
     protected $appends = ['url'];
     protected $base64;
     protected $decodedBase64;
-    protected $disk = 'public';
+    protected $disk    = 'public';
 
     protected $casts = [
         'main' => 'boolean'
     ];
+
+    public function getObject()
+    {
+        return $this->object;
+    }
 
     public function url($path)
     {
@@ -141,7 +147,7 @@ class Image extends Entity implements Sortable
         $image->filename = $filename ?: (is_string($file) ? basename($file) : $file->getClientOriginalName());
 
         if (is_string($file)) {
-            $image->filename = preg_replace("/(^.*?\.(jpg|jpeg|png|svg|gif|webp))(.*)$/i", '$1', $image->filename);
+            $image->filename = preg_replace("/(^.*?\.(jpg|jpeg|png|svg|gif|webp|avif))(.*)$/i", '$1', $image->filename);
         }
 
         if (strlen($image->filename) > 200)
@@ -162,14 +168,34 @@ class Image extends Entity implements Sortable
         return $this->object->getImageDir($type);
     }
 
-    public function getPath($type = 'original')
+    public function getPath($type = 'original', $format = null)
     {
-        return $this->getDir($type) . '/' . $this->filename;
+        return $this->getDir($type) . '/' . $this->getFormatFilename($format);
     }
 
-    public function getUrl($type = 'original')
+    public function getUrl($type = 'original', $format = null)
     {
-        return $this->url($this->getPath($type));
+        return $this->url($this->getPath($type, $format));
+    }
+
+    public function getFormatFilename($format = null)
+    {
+        if (! $format)
+            return $this->filename;
+
+        $originalFormat = $this->format;
+
+        if (! $originalFormat) {
+            $info = $this->pathInfo();
+            return $info['filename'] . '.' . $format;
+        }
+
+        return preg_replace('/\.' . $originalFormat . '$/', '.' . $format, $this->filename);
+    }
+
+    public function pathInfo()
+    {
+        return pathinfo($this->getStorage()->path($this->getPath()));
     }
 
     public function setDisk($value)
@@ -248,11 +274,30 @@ class Image extends Entity implements Sortable
         /** @var \Intervention\Image\Image $thumb */
         $thumb = $function($image, $object);
 
+        $path = $storage->path($this->getPath($name));
+
         $thumb->save(
-            $storage->path($this->getPath($name)),
+            $path,
             $thumbnail->getQuality(),
             $thumbnail->getFormat()
         );
+
+
+        if (count($object->extraFormats())) {
+            $thumbInfo = pathinfo($path);
+            $formatlessPath = $thumbInfo['dirname'] . '/' . $thumbInfo['filename'];
+
+            foreach ($object->extraFormats() as $item) {
+                $format = $item['format'];
+                $quality = $item['quality'];
+
+                $thumb->save(
+                    $formatlessPath . '.' . $format,
+                    $quality,
+                    $format
+                );
+            }
+        }
 
         return $thumb;
     }

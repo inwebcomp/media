@@ -142,10 +142,11 @@ class Images extends MorphMany
 
             $storage = $this->getStorage();
 
+            $path = $image->getDir() . DIRECTORY_SEPARATOR . $image->filename;
+
             if ($object->getImageThumbnail('original')) {
                 $image->createThumbnail('original');
             } else {
-                $path = $image->getDir() . DIRECTORY_SEPARATOR . $image->filename;
                 if ($image->isBase64()) {
                     $storage->createDir($image->getDir());
                     $storage->put($path, $image->getBase64DecodedContent());
@@ -158,6 +159,9 @@ class Images extends MorphMany
 
             if (! $object->fresh()->hasImages())
                 $image->main = 1;
+
+            $info = pathinfo($path);
+            $image->format = $info['extension'];
 
             $image->save();
 

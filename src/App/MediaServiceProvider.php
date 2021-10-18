@@ -5,11 +5,11 @@ namespace InWeb\Media;
 use Illuminate\Database\Eloquent\Factory as EloquentFactory;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
-use InWeb\Admin\App\Http\Middleware\AdminAccess;
+use InWeb\Media\Console\Commands\SetMissingFormat;
 
 class MediaServiceProvider extends ServiceProvider
 {
-    protected static $packagePath = __DIR__ . '/../../';
+    protected static $packagePath  = __DIR__ . '/../../';
     protected static $packageAlias = 'media';
 
     public static function getPackageAlias()
@@ -33,22 +33,32 @@ class MediaServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->registerPublishing();
         }
+
+        if (! $this->app->configurationIsCached()) {
+            $this->mergeConfigFrom(
+                static::getPackagePath() . 'src/config/config.php',
+                static::getPackageAlias()
+            );
+        }
     }
 
     /**
      * Register the application services.
      *
      * @return void
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
     public function register()
     {
         $this->registerResources();
+        $this->registerCommands();
     }
 
     /**
      * Register the package resources such as routes, templates, etc.
      *
      * @return void
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
     protected function registerResources()
     {
@@ -63,7 +73,14 @@ class MediaServiceProvider extends ServiceProvider
     {
         // Config
         $this->publishes([
-            self::$packagePath . 'config/config.php' => config_path(self::$packageAlias . '.php'),
+            self::$packagePath . 'src/config/config.php' => config_path(self::$packageAlias . '.php'),
         ], 'config');
+    }
+
+    private function registerCommands()
+    {
+        $this->commands([
+            SetMissingFormat::class,
+        ]);
     }
 }

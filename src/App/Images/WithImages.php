@@ -61,7 +61,7 @@ trait WithImages
         $query = (new Images(
             $instance->newQuery(), $this, 'model', $foreignKey, $localKey
         ))->with('object')->setObject($this)->where([
-            'model' => get_class($this)
+            'model'  => get_class($this),
         ])->orderBy('position')
           ->setType($type);
 
@@ -182,7 +182,7 @@ trait WithImages
 
     public function image($type = null)
     {
-        return optional($this->images)->first(function($image) use ($type) {
+        return optional($this->images)->first(function ($image) use ($type) {
             return $image->isMain() && (! $type or $image->type == $type);
         });
     }
@@ -199,5 +199,13 @@ trait WithImages
         $image = $query->first();
 
         return $image;
+    }
+
+    /**
+     * @return array
+     */
+    public function extraFormats() : array
+    {
+        return config('media.image.extra_formats');
     }
 }
