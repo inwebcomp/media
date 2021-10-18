@@ -5,6 +5,7 @@ namespace InWeb\Media;
 use Illuminate\Database\Eloquent\Factory as EloquentFactory;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
+use InWeb\Media\Console\Commands\CreateExtraFormats;
 use InWeb\Media\Console\Commands\SetMissingFormat;
 
 class MediaServiceProvider extends ServiceProvider
@@ -81,6 +82,7 @@ class MediaServiceProvider extends ServiceProvider
     {
         $this->commands([
             SetMissingFormat::class,
+            CreateExtraFormats::class,
         ]);
     }
 }

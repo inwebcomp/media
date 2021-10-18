@@ -170,7 +170,12 @@ class Image extends Entity implements Sortable
 
     public function getPath($type = 'original', $format = null)
     {
-        return $this->getDir($type) . '/' . $this->getFormatFilename($format);
+        if ($this->format == 'svg')
+            $filename = $this->filename;
+        else
+            $filename = $this->getFormatFilename($format);
+
+        return $this->getDir($type) . '/' . $filename;
     }
 
     public function getUrl($type = 'original', $format = null)
@@ -300,6 +305,24 @@ class Image extends Entity implements Sortable
         }
 
         return $thumb;
+    }
+
+    public function createExtraFormatFile($format, $quality, $type = 'original')
+    {
+        $imageSource = $this->getStorage()->path($this->getPath($type));
+        $info = pathinfo($imageSource);
+
+        if ($info['extension'] == 'svg')
+            return;
+
+        $image = \Image::make($imageSource);
+        $path = $info['dirname'] . '/' . $info['filename'] . '.' . $format;
+
+        $image->save(
+            $path,
+            $quality,
+            $format
+        );
     }
 
     /**
