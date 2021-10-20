@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use InWeb\Base\Entity;
 use InWeb\Media\Images\Image;
 use InWeb\Media\Images\Images;
+use InWeb\Media\Images\Thumbnail;
 use InWeb\Media\Images\WithImages;
 
 class CreateExtraFormats extends Command
@@ -75,7 +76,11 @@ class CreateExtraFormats extends Command
                         $newSize[$format] += $storage->size($image->getPath('original', $format));
                     }
 
+                    /** @var Thumbnail $thumbnail */
                     foreach ($object->getImageThumbnails() as $thumbnail => $info) {
+                        if ($thumbnail->isOnlyForMain() and !$image->isMain())
+                            continue;
+
                         $image->createExtraFormatFile($format, $quality, $thumbnail);
                     }
                 }
