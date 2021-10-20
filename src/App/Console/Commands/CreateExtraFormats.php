@@ -78,7 +78,7 @@ class CreateExtraFormats extends Command
 
                     /** @var Thumbnail $thumbnail */
                     foreach ($object->getImageThumbnails() as $thumbnail => $info) {
-                        if ($thumbnail->isOnlyForMain() and !$image->isMain())
+                        if ($info->isOnlyForMain() and !$image->isMain())
                             continue;
 
                         $image->createExtraFormatFile($format, $quality, $thumbnail);
