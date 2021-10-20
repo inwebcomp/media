@@ -53,29 +53,34 @@ class CreateExtraFormats extends Command
             $object = $image->getObject();
             $storage = $image->getStorage();
 
-            foreach ($object->extraFormats() as $item) {
-                $format = $item['format'];
-                $quality = $item['quality'];
+            try {
+                foreach ($object->extraFormats() as $item) {
+                    $format = $item['format'];
+                    $quality = $item['quality'];
 
-                if ($analyze) {
-                    $originalSize += $storage->size($image->getPath());
+                    if ($analyze) {
+                        $originalSize += $storage->size($image->getPath());
+                    }
+
+                    if (! $storage->exists($image->getPath()))
+                        continue;
+
+                    $image->createExtraFormatFile($format, $quality);
+
+                    if ($analyze) {
+                        if (! isset($newSize[$format]))
+                            $newSize[$format] = 0;
+
+                        $newSize[$format] += $storage->size($image->getPath('original', $format));
+                    }
+
+                    foreach ($object->getImageThumbnails() as $thumbnail => $info) {
+                        $image->createExtraFormatFile($format, $quality, $thumbnail);
+                    }
                 }
-
-                if (! $storage->exists($image->getPath()))
-                    continue;
-
-                $image->createExtraFormatFile($format, $quality);
-
-                if ($analyze) {
-                    if (! isset($newSize[$format]))
-                        $newSize[$format] = 0;
-
-                    $newSize[$format] += $storage->size($image->getPath('original', $format));
-                }
-
-                foreach ($object->getImageThumbnails() as $thumbnail => $info) {
-                    $image->createExtraFormatFile($format, $quality, $thumbnail);
-                }
+            } catch (\Exception $exception) {
+                $this->getOutput()->error($image->getPath());
+                throw $exception;
             }
 
             $this->getOutput()->progressAdvance(1);
