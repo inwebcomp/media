@@ -58,12 +58,12 @@ class CreateExtraFormats extends Command
                     $format = $item['format'];
                     $quality = $item['quality'];
 
+                    if (! $storage->exists($image->getPath()))
+                        continue;
+
                     if ($analyze) {
                         $originalSize += $storage->size($image->getPath());
                     }
-
-                    if (! $storage->exists($image->getPath()))
-                        continue;
 
                     $image->createExtraFormatFile($format, $quality);
 
