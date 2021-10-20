@@ -58,8 +58,9 @@ class CreateExtraFormats extends Command
                     $format = $item['format'];
                     $quality = $item['quality'];
 
-                    if (! $storage->exists($image->getPath()))
+                    if (! $storage->exists($image->getPath()) or $image->format == 'svg') {
                         continue;
+                    }
 
                     if ($analyze) {
                         $originalSize += $storage->size($image->getPath());
