@@ -305,7 +305,7 @@ class Image extends Entity implements Sortable
                 );
 
                 if (config('media.image.legacy_libwebp', false)) {
-                    if (filesize($path) % 2 == 1) {
+                    if ($storage->size($path) % 2 == 1) {
                         $storage->put($path, "\0", FILE_APPEND);
                     }
                 }
@@ -334,7 +334,7 @@ class Image extends Entity implements Sortable
         );
 
         if (config('media.image.legacy_libwebp', false)) {
-            if (filesize($path) % 2 == 1) {
+            if ($storage->size($path) % 2 == 1) {
                 $storage->put($path, "\0", FILE_APPEND);
             }
         }
