@@ -296,11 +296,19 @@ class Image extends Entity implements Sortable
                 $format = $item['format'];
                 $quality = $item['quality'];
 
+                $path = $formatlessPath . '.' . $format;
+
                 $thumb->save(
-                    $formatlessPath . '.' . $format,
+                    $path,
                     $quality,
                     $format
                 );
+
+                if (config('media.image.legacy_libwebp', false)) {
+                    if (filesize($path) % 2 == 1) {
+                        $storage->put($path, "\0", FILE_APPEND);
+                    }
+                }
             }
         }
 
@@ -309,7 +317,8 @@ class Image extends Entity implements Sortable
 
     public function createExtraFormatFile($format, $quality, $type = 'original')
     {
-        $imageSource = $this->getStorage()->path($this->getPath($type));
+        $storage = $this->getStorage();
+        $imageSource = $storage->path($this->getPath($type));
         $info = pathinfo($imageSource);
 
         if ($info['extension'] == 'svg')
@@ -323,6 +332,12 @@ class Image extends Entity implements Sortable
             $quality,
             $format
         );
+
+        if (config('media.image.legacy_libwebp', false)) {
+            if (filesize($path) % 2 == 1) {
+                $storage->put($path, "\0", FILE_APPEND);
+            }
+        }
     }
 
     /**
