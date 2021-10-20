@@ -165,6 +165,12 @@ class Images extends MorphMany
 
             $image->save();
 
+            foreach ($object->extraFormats() as $item) {
+                $format = $item['format'];
+                $quality = $item['quality'];
+                $image->createExtraFormatFile($format, $quality, 'original');
+            }
+
             if ($createThumbnails) {
                 $image->createThumbnails();
             }
