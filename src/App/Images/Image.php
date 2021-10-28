@@ -528,6 +528,11 @@ class Image extends Entity implements Sortable
 
     public function scopeType(Builder $query, $type)
     {
-        return $query->where('type', $type);
+        return $query->where('type', '=', $type);
+    }
+
+    public function scopeMain(Builder $query)
+    {
+        return $query->where('main', '=', 1);
     }
 }
