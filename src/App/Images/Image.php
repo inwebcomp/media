@@ -289,6 +289,13 @@ class Image extends Entity implements Sortable
 
 
         if (count($object->extraFormats())) {
+            if ($info['extension'] == 'png') {
+                $newImage = \Image::canvas($thumb->width(), $thumb->height(), '#ffffff');
+                $newImage->insert($thumb);
+                $thumb = $newImage;
+                unset($newImage);
+            }
+
             $thumbInfo = pathinfo($path);
             $formatlessPath = $thumbInfo['dirname'] . '/' . $thumbInfo['filename'];
 
@@ -326,6 +333,13 @@ class Image extends Entity implements Sortable
 
         $image = \Image::make($imageSource);
         $path = $info['dirname'] . '/' . $info['filename'] . '.' . $format;
+
+        if ($info['extension'] == 'png') {
+            $newImage = \Image::canvas($image->width(), $image->height(), '#ffffff');
+            $newImage->insert($image);
+            $image = $newImage;
+            unset($newImage);
+        }
 
         $image->save(
             $path,

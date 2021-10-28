@@ -16,7 +16,7 @@ class CreateExtraFormats extends Command
      *
      * @var string
      */
-    protected $signature = 'images:extra-formats {--analyze}';
+    protected $signature = 'images:extra-formats {--format=} {--analyze}';
     /**
      * The console command description.
      *
@@ -41,7 +41,15 @@ class CreateExtraFormats extends Command
      */
     public function handle()
     {
-        $images = Image::orderBy('model')->get();
+        $format = $this->option('format') ?: false;
+
+        $images = Image::orderBy('model');
+
+        if ($format) {
+            $images->where('format', '=', $format);
+        }
+
+        $images = $images->get();
 
         $this->getOutput()->progressStart(count($images));
 
