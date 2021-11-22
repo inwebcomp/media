@@ -384,7 +384,15 @@ class Image extends Entity implements Sortable
     {
         $this->assertThumbnailExists($name);
 
-        $this->getStorage()->delete($this->getPath($name));
+        if (! $this->getStorage()->delete($this->getPath($name))) {
+            throw new \Exception("Can't delete image file");
+        }
+
+        foreach ($this->getObject()->extraFormats() as $format) {
+            if (! $this->getStorage()->delete($this->getPath($name, $format['format']))) {
+                throw new \Exception("Can't delete image file");
+            }
+        }
 
         return true;
     }

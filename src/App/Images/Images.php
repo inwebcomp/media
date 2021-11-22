@@ -234,7 +234,15 @@ class Images extends MorphMany
             $image = $object->getImage($image);
         }
 
-        $this->getStorage()->delete($image->getPath());
+        if (! $this->getStorage()->delete($image->getPath('original'))) {
+            throw new \Exception("Can't delete image file");
+        }
+
+        foreach ($object->extraFormats() as $format) {
+            if (! $this->getStorage()->delete($image->getPath('original', $format['format']))) {
+                throw new \Exception("Can't delete image file");
+            }
+        }
 
         $image->removeThumbnails();
 
