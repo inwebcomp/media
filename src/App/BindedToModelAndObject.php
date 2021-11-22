@@ -16,7 +16,7 @@ trait BindedToModelAndObject
 {
     public function object()
     {
-        return $this->morphTo(null, 'model', 'object_id');
+        return $this->morphTo(null, 'model', 'object_id')->withoutGlobalScopes();
     }
 
 //    /**
