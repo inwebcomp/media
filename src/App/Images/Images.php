@@ -234,13 +234,21 @@ class Images extends MorphMany
             $image = $object->getImage($image);
         }
 
-        if (! $this->getStorage()->delete($image->getPath('original'))) {
-            throw new \Exception("Can't delete image file");
+        $path = $image->getPath('original');
+
+        if ($this->getStorage()->exists($path)) {
+            if (! $this->getStorage()->delete($path)) {
+                throw new \Exception("Can't delete image file");
+            }
         }
 
         foreach ($object->extraFormats() as $format) {
-            if (! $this->getStorage()->delete($image->getPath('original', $format['format']))) {
-                throw new \Exception("Can't delete image file");
+            $path = $image->getPath('original', $format['format']);
+
+            if ($this->getStorage()->exists($path)) {
+                if (! $this->getStorage()->delete($path)) {
+                    throw new \Exception("Can't delete image file");
+                }
             }
         }
 
