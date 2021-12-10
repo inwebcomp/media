@@ -2,23 +2,23 @@
 
 namespace InWeb\Media;
 
-use Illuminate\Database\Eloquent\Factory as EloquentFactory;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use InWeb\Media\Console\Commands\CreateExtraFormats;
 use InWeb\Media\Console\Commands\SetMissingFormat;
+use InWeb\Media\Database\Factories\TestEntityFactory;
 
 class MediaServiceProvider extends ServiceProvider
 {
-    protected static $packagePath  = __DIR__ . '/../../';
-    protected static $packageAlias = 'media';
+    protected static string $packagePath  = __DIR__ . '/../../';
+    protected static string $packageAlias = 'media';
 
-    public static function getPackageAlias()
+    public static function getPackageAlias(): string
     {
         return self::$packageAlias;
     }
 
-    public static function getPackagePath()
+    public static function getPackagePath(): string
     {
         return self::$packagePath;
     }
@@ -64,10 +64,6 @@ class MediaServiceProvider extends ServiceProvider
     protected function registerResources()
     {
         $this->loadMigrationsFrom(self::$packagePath . 'src/database/migrations');
-
-        if ($this->app->runningInConsole()) {
-            $this->app->make(EloquentFactory::class)->load(self::$packagePath . 'src/database/factories');
-        }
     }
 
     private function registerPublishing()
