@@ -18,12 +18,12 @@ class TestEntity extends Entity
     public function getImageThumbnails()
     {
         return [
-            'original' => new Thumbnail(function (Image $image, Entity $object) {
-                return $image->resize(20, 20, function (Constraint $constraint) {
-                    $constraint->aspectRatio();
-                    $constraint->upsize();
-                })->resizeCanvas(20, 20);
-            }),
+//            'original' => new Thumbnail(function (Image $image, Entity $object) {
+//                return $image->resize(20, 20, function (Constraint $constraint) {
+//                    $constraint->aspectRatio();
+//                    $constraint->upsize();
+//                })->resizeCanvas(20, 20);
+//            }),
             'test'     => new Thumbnail(function (Image $image, Entity $object) {
                 return $image->resize(100, 100);
             }),

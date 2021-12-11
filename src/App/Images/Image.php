@@ -33,6 +33,8 @@ class Image extends Entity implements Sortable
     use BindedToModelAndObject,
         Positionable;
 
+    public mixed $mime;
+
     protected static function boot()
     {
         parent::boot();
@@ -71,7 +73,17 @@ class Image extends Entity implements Sortable
 
     public function url($path)
     {
-        return $this->getStorage()->url($path);
+        $version = null;
+
+        if (config('media.image.version')) {
+            $date = $this->updated_at ?: $this->created_at;
+
+            if ($date) {
+                $version = $date->timestamp;
+            }
+        }
+
+        return $this->getStorage()->url($path) . ($version ? '?v=' . $version : '');
     }
 
     public function getPathAttribute()
@@ -185,12 +197,12 @@ class Image extends Entity implements Sortable
 
     public function getFormatFilename($format = null)
     {
-        if (! $format)
+        if (!$format)
             return $this->filename;
 
         $originalFormat = $this->format;
 
-        if (! $originalFormat) {
+        if (!$originalFormat) {
             $info = $this->pathInfo();
             return $info['filename'] . '.' . $format;
         }
@@ -242,13 +254,13 @@ class Image extends Entity implements Sortable
         $object = $this->object;
         $thumbnail = $object->getImageThumbnail($name);
 
-        if (! $thumbnail->shouldCreateThumbnail($object, $this))
+        if (!$thumbnail->shouldCreateThumbnail($object, $this))
             return false;
 
-        if ($thumbnail->isOnlyForMain() and ! $this->isMain())
+        if ($thumbnail->isOnlyForMain() and !$this->isMain())
             return false;
 
-        if ($this->type and ! $thumbnail->isForType($this->type))
+        if ($this->type and !$thumbnail->isForType($this->type))
             return false;
 
         $function = $modifier ?? $thumbnail->getModifier();
@@ -269,17 +281,33 @@ class Image extends Entity implements Sortable
 
         $info = pathinfo($imageSource);
 
-        if (isset($info['extension']) and $info['extension'] == 'svg') {
+        $avoidExtensions = [
+            'svg',
+            'gif'
+        ];
+
+        $avoidMimes = [
+            'image/svg+xml',
+            'image/gif'
+        ];
+
+        if (isset($info['extension']) and in_array($info['extension'], $avoidExtensions)) {
             File::copy($imageSource, $storage->path($this->getPath($name)));
             return true;
         }
 
+        if (isset($this->mime) and in_array($this->mime, $avoidMimes)) {
+            File::copy($imageSource, $storage->path($this->getPath($name)));
+            return true;
+        }
+
+        /** @var \Intervention\Image\Image $image */
         $image = \Image::make($imageSource);
+
+        $path = $storage->path($this->getPath($name));
 
         /** @var \Intervention\Image\Image $thumb */
         $thumb = $function($image, $object);
-
-        $path = $storage->path($this->getPath($name));
 
         $thumb->save(
             $path,
@@ -287,9 +315,8 @@ class Image extends Entity implements Sortable
             $thumbnail->getFormat()
         );
 
-
         if (count($object->extraFormats())) {
-            if ($info['extension'] == 'png') {
+            if (isset($info['extension']) and $info['extension'] == 'png') {
                 $newImage = \Image::canvas($thumb->width(), $thumb->height(), '#ffffff');
                 $newImage->insert($thumb);
                 $thumb = $newImage;
@@ -327,6 +354,9 @@ class Image extends Entity implements Sortable
         $storage = $this->getStorage();
         $imageSource = $storage->path($this->getPath($type));
         $info = pathinfo($imageSource);
+
+        if (!isset($info['extension']))
+            return;
 
         if ($info['extension'] == 'svg')
             return;
@@ -386,7 +416,7 @@ class Image extends Entity implements Sortable
 
         $path = $this->getPath($name);
         if ($this->getStorage()->exists($path)) {
-            if (! $this->getStorage()->delete($path)) {
+            if (!$this->getStorage()->delete($path)) {
                 throw new \Exception("Can't delete image file");
             }
         }
@@ -394,7 +424,7 @@ class Image extends Entity implements Sortable
         foreach ($this->getObject()->extraFormats() as $format) {
             $path = $this->getPath($name, $format['format']);
             if ($this->getStorage()->exists($path)) {
-                if (! $this->getStorage()->delete($path)) {
+                if (!$this->getStorage()->delete($path)) {
                     throw new \Exception("Can't delete image file");
                 }
             }
@@ -440,9 +470,9 @@ class Image extends Entity implements Sortable
      * @param $name
      * @throws Exception
      */
-    public function assertThumbnailExists($name) : void
+    public function assertThumbnailExists($name): void
     {
-        if (! $this->object->imageThumbnailExists($name)) {
+        if (!$this->object->imageThumbnailExists($name)) {
             throw new Exception(
                 'Thumbnail with name "' . $name . '" does not exists at model ' . $this->object->getMorphClass()
             );
@@ -483,11 +513,15 @@ class Image extends Entity implements Sortable
             return $this->base64;
 
         try {
-            $decoded = base64_decode($this->getInstance(), true);
+            $tmp = explode("base64,", $this->getInstance());
 
-            if (base64_encode($decoded) === $this->getInstance()) {
+            $content = $tmp[1];
+            $decoded = base64_decode($content, true);
+
+            if (base64_encode($decoded) === $content) {
                 $this->base64 = true;
                 $this->decodedBase64 = $decoded;
+                $this->mime = trim(str_replace(['data:', ';'], '', $tmp[0]));
                 return true;
             } else {
                 $this->base64 = false;
@@ -512,17 +546,45 @@ class Image extends Entity implements Sortable
         if ($this->isMain())
             return;
 
-        $mainImage = $this->object->mainImage($this->type);
+        if (!$this->language) {
+            $mainImages = $this->object->images($this->type, true)
+                                       ->where('main', '=', 1)
+                                       ->get();
 
-        if ($mainImage) {
-            $mainImage->main = 0;
-            $mainImage->save();
-            $mainImage->removeMainThumbnails();
+            if ($mainImages->count()) {
+                foreach ($mainImages as $image) {
+                    $image->setNotMain();
+                }
+            }
+        } else {
+            $mainImages = $this->object->images($this->type, true)
+                                       ->where('main', '=', 1)
+                                       ->forLanguage($this->language)
+                                       ->get();
+
+            if ($mainImages->count()) {
+                foreach ($mainImages as $image) {
+                    $image->setNotMain();
+                }
+            }
         }
 
         $this->main = 1;
         $this->save();
         $this->createMainThumbnails();
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function setNotMain()
+    {
+        if (!$this->isMain())
+            return;
+
+        $this->main = 0;
+        $this->save();
+        $this->removeMainThumbnails();
     }
 
     public function isMain()
@@ -535,20 +597,26 @@ class Image extends Entity implements Sortable
      */
     public function setLanguage($language)
     {
-        $this->language = $language;
-        $this->save();
+        if (!in_array($language, config('inweb.languages')))
+            $language = null;
 
-        if ($this->object->images()->where('main', 1)->count() > 1) {
-            $this->main = false;
-            $this->save();
+        $this->language = $language;
+
+        if ($this->isMain()) {
+            $mainImage = $this->object->mainImage($this->type, $language);
+
+            if ($mainImage)
+                $this->setNotMain();
         }
 
+        $this->save();
+
         foreach (config('inweb.languages') as $language) {
-            if (! $this->object->imagesForLanguage($language)->where('main', 1)->count()) {
-                $image = $this->object->imagesForLanguage($language)->first();
+            $mainImage = $this->object->mainImage($this->type, $language);
+            if (!$mainImage) {
+                $image = $this->object->imagesForLanguage($language, $this->type)->first();
                 if ($image) {
-                    $image->main = true;
-                    $image->save();
+                    $image->setMain();
                 }
             }
         }
@@ -562,5 +630,13 @@ class Image extends Entity implements Sortable
     public function scopeMain(Builder $query)
     {
         return $query->where('main', '=', 1);
+    }
+
+    public function scopeForLanguage(Builder $query, $language)
+    {
+        return $query->where(function ($q) use ($language) {
+            $q->whereNull('language');
+            $q->orWhere('language', $language);
+        });
     }
 }

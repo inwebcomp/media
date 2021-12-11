@@ -43,7 +43,7 @@ class ImageTestCase extends TestCase
      */
     public static function createImage($name = null)
     {
-        $name = $name ?: str_random(10);
+        $name = $name ?: \Str::random(10);
 
         return UploadedFile::fake()->image($name, self::IMAGE_SIZE, self::IMAGE_SIZE);
     }

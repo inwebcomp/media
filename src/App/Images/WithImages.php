@@ -38,7 +38,7 @@ trait WithImages
         else if ($this->name)
             $result = $this->name;
 
-        if (! $result)
+        if (!$result)
             return $this->getKey();
 
         return Str::slug($result);
@@ -61,11 +61,11 @@ trait WithImages
         $query = (new Images(
             $instance->newQuery(), $this, 'model', $foreignKey, $localKey
         ))->with('object')->setObject($this)->where([
-            'model'  => get_class($this),
+            'model' => get_class($this),
         ])->orderBy('position')
           ->setType($type);
 
-        if (! $forAnyLanguage) {
+        if (!$forAnyLanguage) {
             $query->where(function ($q) {
                 $q->whereNull('language');
                 $q->orWhere('language', \App::getLocale());
@@ -81,19 +81,22 @@ trait WithImages
 
     /**
      * @param string $language
+     * @param string $type
      * @return Images
      */
-    public function imagesForLanguage($language)
+    public function imagesForLanguage($language, $type = null)
     {
-        return $this->images(true)->where(function ($q) use ($language) {
-            $q->whereNull('language');
-            $q->orWhere('language', $language);
-        });
+        return $this->images($type, true)->forLanguage($language);
     }
 
     public function hasImages()
     {
         return $this->images->isNotEmpty();
+    }
+
+    public function hasImagesOfType($type)
+    {
+        return $this->images($type)->count() > 0;
     }
 
     public function getDisk()
@@ -164,7 +167,7 @@ trait WithImages
             ])->first();
         }
 
-        if (! $image)
+        if (!$image)
             throw new NotFoundException('Image could not be found [' . $imageName . ']');
 
         return $image;
@@ -183,28 +186,34 @@ trait WithImages
     public function image($type = null)
     {
         return optional($this->images)->first(function ($image) use ($type) {
-            return $image->isMain() && (! $type or $image->type == $type);
+            return $image->isMain() && (!$type or $image->type == $type);
         });
     }
 
     /**
-     * @param null $type
-     * @return Image
+     * @param string|null $type
+     * @param string|null $language
+     * @return Image|null
      */
-    public function mainImage($type = null)
+    public function mainImage(string $type = null, string $language = null): ?Image
     {
-        $query = $this->images($type)->where('main', '=', '1');
+        $language = $language ?: \App::getLocale();
+
+        $query = $this->images($type, true)
+                      ->where('main', '=', '1');
+
+        if ($language) {
+            $query->forLanguage($language);
+        }
 
         /** @var Image $image */
-        $image = $query->first();
-
-        return $image;
+        return $query->first();
     }
 
     /**
      * @return array
      */
-    public function extraFormats() : array
+    public function extraFormats(): array
     {
         return config('media.image.extra_formats');
     }

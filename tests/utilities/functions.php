@@ -2,13 +2,13 @@
 if (! function_exists('create')) {
     function create($class, $attributes = [])
     {
-        return factory($class)->create($attributes);
+        return \InWeb\Media\Database\Factories\TestEntityFactory::new()->create($attributes);
     }
 }
 
 if (! function_exists('make')) {
     function make($class, $attributes = [])
     {
-        return factory($class)->make($attributes);
+        return \InWeb\Media\Database\Factories\TestEntityFactory::new($attributes);
     }
 }

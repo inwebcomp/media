@@ -38,7 +38,7 @@ class ImagesTest extends ImageTestCase
     {
         $object = WithImagesTest::getObject();
 
-        $image = \Faker\Provider\Image::image();
+        $image = self::createImage('image.jpg');
         $base64 = 'data:' . \File::mimeType($image) . ';base64,' . base64_encode(\File::get($image));
 
         $image = $object->images()->add($base64, false, 'image.jpg');
@@ -54,7 +54,7 @@ class ImagesTest extends ImageTestCase
     {
         $object = WithImagesTest::getObject();
 
-        $image = base_path('tests/resources/image.svg');
+        $image = __DIR__ . '/../resources/image.svg';
 
         $image = $object->images()->add($image, false);
 
@@ -206,7 +206,7 @@ class ImagesTest extends ImageTestCase
             return $image;
         });
     }
-    
+
     /** @test */
     public function dont_create_thumbnail_if_it_is_only_for_main_image()
     {

@@ -148,7 +148,7 @@ class Images extends MorphMany
                 $image->createThumbnail('original');
             } else {
                 if ($image->isBase64()) {
-                    $storage->createDir($image->getDir());
+                    $storage->makeDirectory($image->getDir());
                     $storage->put($path, $image->getBase64DecodedContent());
                 } else if (is_string($image->getInstance())) {
                     $storage->put($path, $this->getRemote($image->getInstance()));
@@ -157,18 +157,20 @@ class Images extends MorphMany
                 }
             }
 
-            if (! $object->fresh()->hasImages())
-                $image->main = 1;
-
             $info = pathinfo($path);
-            $image->format = $info['extension'];
+            $image->format = $info['extension'] ?? null;
+
+            if (! $object->fresh()->hasImagesOfType($image->type))
+                $image->setMain();
 
             $image->save();
 
-            foreach ($object->extraFormats() as $item) {
-                $format = $item['format'];
-                $quality = $item['quality'];
-                $image->createExtraFormatFile($format, $quality, 'original');
+            if ($image->format) {
+                foreach ($object->extraFormats() as $item) {
+                    $format = $item['format'];
+                    $quality = $item['quality'];
+                    $image->createExtraFormatFile($format, $quality, 'original');
+                }
             }
 
             if ($createThumbnails) {
