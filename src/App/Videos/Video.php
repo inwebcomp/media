@@ -221,7 +221,15 @@ class Video extends Entity implements Sortable
 
     public function isEmbed()
     {
-        return strpos($this->getUrl(true), 'https://www.youtube.com/embed/') !== false;
+        $url = $this->getUrl(true);
+
+        if (str_starts_with($url, 'https://www.youtube.com/embed'))
+            return true;
+
+        if (str_starts_with($url, 'https://player.vimeo.com/video'))
+            return true;
+
+        return false;
     }
 
     public function getHostingThumbnailFromUrl($url)
@@ -239,6 +247,11 @@ class Video extends Entity implements Sortable
         if ($match = 'youtube.com/watch?v=' and ($pos = strpos($url, $match)) !== false) {
             $id = substr($url, $pos + strlen($match), 11);
             return 'https://www.youtube.com/embed/' . $id;
+        }
+
+        if ($match = 'https://vimeo.com/' and ($pos = strpos($url, $match)) !== false) {
+            $id = (int) str_replace($match, '', $url);
+            return 'https://player.vimeo.com/video/' . $id;
         }
 
         return $url;

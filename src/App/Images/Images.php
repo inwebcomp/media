@@ -328,7 +328,7 @@ class Images extends MorphMany
     private function getRemote($url)
     {
         $file_headers = @get_headers($url);
-        if ($file_headers[0] == 'HTTP/1.1 404 Not Found') {
+        if (($file_headers[0] ?? false) == 'HTTP/1.1 404 Not Found') {
             throw new FileNotFoundException("Remote file does not exist at path {$url}");
         }
 
