@@ -147,13 +147,21 @@ class Images extends MorphMany
             if ($object->getImageThumbnail('original')) {
                 $image->createThumbnail('original');
             } else {
+                $instance = $image->getInstance();
+
                 if ($image->isBase64()) {
                     $storage->makeDirectory($image->getDir());
                     $storage->put($path, $image->getBase64DecodedContent());
-                } else if (is_string($image->getInstance())) {
-                    $storage->put($path, $this->getRemote($image->getInstance()));
+                } else if (is_string($instance) and (
+                        str_starts_with($instance, '//') or
+                        str_starts_with($instance, 'http://') or
+                        str_starts_with($instance, 'https://')
+                    )) {
+                    $storage->put($path, $this->getRemote($instance));
+                } else if (is_string($instance)) {
+                    $storage->put($path, file_get_contents($instance));
                 } else {
-                    $image->getInstance()->storeAs($image->getDir(), $image->filename, $this->getDisk());
+                    $instance->storeAs($image->getDir(), $image->filename, $this->getDisk());
                 }
             }
 

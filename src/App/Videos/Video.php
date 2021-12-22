@@ -277,9 +277,10 @@ class Video extends Entity implements Sortable
 
     /**
      * @param int $frames
+     * @param float $startFromTime
      * @throws \Throwable
      */
-    public function createFramesFromFile($frames = 4)
+    public function createFramesFromFile($frames = 4, $startFromTime = 1)
     {
         $videoPath = storage_path('app/public/' . $this->getPath());
 
@@ -289,6 +290,7 @@ class Video extends Entity implements Sortable
             'timeout'          => 60,
             'ffmpeg.threads'   => 16,
         ]);
+
         /** @var \FFMpeg\Media\Video $ffVideo */
         $ffVideo = $ffmpeg->open($videoPath);
 
@@ -298,11 +300,35 @@ class Video extends Entity implements Sortable
         if ($duration <= 4)
             $interval = 1;
 
-        for ($s = 1; $s < $duration - 1; $s += $interval) {
+        for ($s = $startFromTime; $s < $duration - 1; $s += $interval) {
             $frame = $ffVideo->frame(\FFMpeg\Coordinate\TimeCode::fromSeconds($s));
             $frame->save($path = tempnam(sys_get_temp_dir(), 'laravel_app_'));
 
             $this->images()->add($path, true, 'image-' . $s . '.jpg');
         }
+    }
+
+    /**
+     * @param float $fromSeconds
+     * @throws \Throwable
+     */
+    public function getFrame($fromSeconds = 0)
+    {
+        $videoPath = storage_path('app/public/' . $this->getPath());
+
+        $ffmpeg = \FFMpeg\FFMpeg::create([
+            'ffmpeg.binaries'  => config('video.ffmpeg_binaries'),
+            'ffprobe.binaries' => config('video.ffprobe_binaries'),
+            'timeout'          => 60,
+            'ffmpeg.threads'   => 16,
+        ]);
+
+        /** @var \FFMpeg\Media\Video $ffVideo */
+        $ffVideo = $ffmpeg->open($videoPath);
+
+        $frame = $ffVideo->frame(\FFMpeg\Coordinate\TimeCode::fromSeconds($fromSeconds));
+        $frame->save($path = tempnam(sys_get_temp_dir(), 'laravel_app_'));
+
+        return $path;
     }
 }
