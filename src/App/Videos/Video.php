@@ -216,7 +216,7 @@ class Video extends Entity implements Sortable
 
     public function isLocal()
     {
-        return ! $this->getRawOriginal('url');
+        return ! $this->attributes['url'];
     }
 
     public function isEmbed()
