@@ -340,7 +340,30 @@ class Images extends MorphMany
             throw new FileNotFoundException("Remote file does not exist at path {$url}");
         }
 
-        return file_get_contents($url);
+        $ch = curl_init($url);
+
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_ENCODING, "");
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_FAILONERROR, true);
+        curl_setopt($ch, CURLOPT_ENCODING, "");
+//        curl_setopt($ch, CURLOPT_VERBOSE, true);
+        curl_setopt($ch, CURLOPT_HEADER, false);
+
+        $data = curl_exec($ch);
+        curl_close($ch);
+
+        return $data;
+
+//        return file_get_contents($url, false, stream_context_create([
+//            "ssl" => [
+//                "verify_peer"      => false,
+//                "verify_peer_name" => false,
+//            ],
+//        ]));
     }
 
     /**
