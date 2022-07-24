@@ -167,7 +167,7 @@ class Videos extends MorphMany
 
                 event(new VideoAdded($video));
 
-                $disk->deleteDir($chunksDirectory);
+                $disk->deleteDirectory($chunksDirectory);
 
                 return $video;
             }
