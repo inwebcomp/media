@@ -83,6 +83,19 @@ class Videos extends MorphMany
         return $models;
     }
 
+    public function getDisk()
+    {
+        return $this->object->getDisk();
+    }
+
+    /**
+     * @return \Illuminate\Contracts\Filesystem\Filesystem
+     */
+    public function getStorage()
+    {
+        return Storage::disk($this->getDisk());
+    }
+
     /**
      * @param UploadedFile|string $video
      * @param null|string $filename
@@ -99,23 +112,34 @@ class Videos extends MorphMany
 
         $path = $video->getDir() . DIRECTORY_SEPARATOR . $video->filename;
 
+        $storage = $this->getStorage();
+
         if ($video->isBase64()) {
-            Storage::disk('public')->createDir($video->getDir());
-            Storage::disk('public')->put($path, base64_decode($video->getInstance()));
+            $storage->createDir($video->getDir());
+            $storage->put($path, base64_decode($video->getInstance()));
         } else if (is_string($video->getInstance()) && strpos($video->getInstance(), 'http') === 0) {
             $video->url = $video->getInstance();
             $video->filename = null;
         } else if (is_string($video->getInstance())) {
-            Storage::disk('public')->createDir($video->getDir());
-            File::copy($video->getInstance(), Storage::disk('public')->path($path));
+            $storage->createDir($video->getDir());
+            File::copy($video->getInstance(), $storage->path($path));
         } else {
-            $video->getInstance()->storeAs($video->getDir(), $video->filename, 'public');
+            $video->getInstance()->storeAs($video->getDir(), $video->filename, $this->getDisk());
         }
 
         if (! $object->fresh()->hasVideos())
             $video->main = 1;
 
+        $info = pathinfo($path);
+        $video->format = $info['extension'] ?? null;
+
         $video->save();
+
+        if ($video->format) {
+            foreach ($object->videoExtraFormats() as $format) {
+                $video->createExtraFormatFile($format, 'original');
+            }
+        }
 
         event(new VideoAdded($video));
 
@@ -130,8 +154,7 @@ class Videos extends MorphMany
      */
     public function addChunked($video, $last = false, $filename = null)
     {
-        /** @var \Storage $disk */
-        $disk = \Storage::disk('public');
+        $storage = $this->getStorage();
 
         $object = $this->getObject();
 
@@ -140,12 +163,12 @@ class Videos extends MorphMany
 
         $chunksDirectory = $video->getDir('_chunks');
 
-        $disk->makeDirectory($chunksDirectory);
+        $storage->makeDirectory($chunksDirectory);
 
         $path = $chunksDirectory . DIRECTORY_SEPARATOR . $video->filename;
 
         try {
-            File::append($disk->path($path), $video->getInstance()->get(), '');
+            File::append($storage->path($path), $video->getInstance()->get(), '');
 
             if ($last) {
                 $name = basename($path, '.part');
@@ -153,30 +176,39 @@ class Videos extends MorphMany
 
                 $finalPath = $video->getDir() . DIRECTORY_SEPARATOR . $name;
 
-                if ($disk->exists($finalPath)) {
-                    $disk->delete($finalPath);
+                if ($storage->exists($finalPath)) {
+                    $storage->delete($finalPath);
                 }
 
-                $disk->move($path, $finalPath);
+                $storage->move($path, $finalPath);
 
                 if (! $object->fresh()->hasVideos())
                     $video->main = 1;
+
+                $info = pathinfo($finalPath);
+                $video->format = $info['extension'] ?? null;
 
                 $video->filename = $name;
                 $video->save();
 
                 event(new VideoAdded($video));
 
-                $disk->deleteDirectory($chunksDirectory);
+                $storage->deleteDirectory($chunksDirectory);
+
+                if ($video->format) {
+                    foreach ($object->videoExtraFormats() as $format) {
+                        $video->createExtraFormatFile($format, 'original');
+                    }
+                }
 
                 return $video;
             }
         } catch (\Exception $exception) {
-            if ($disk->exists($path)) {
-                $disk->delete($path);
+            if ($storage->exists($path)) {
+                $storage->delete($path);
             }
 
-            throw new $exception;
+            throw $exception;
         }
 
         return null;

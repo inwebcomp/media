@@ -2,6 +2,7 @@
 
 namespace InWeb\Media\Videos;
 
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
@@ -18,6 +19,7 @@ use Spatie\EloquentSortable\Sortable;
  * @property boolean main
  * @property string mimeType
  * @property WithVideos|Entity object
+ * @property null|string format
  */
 class Video extends Entity implements Sortable
 {
@@ -30,6 +32,7 @@ class Video extends Entity implements Sortable
      */
     protected $instance;
     protected $appends = ['url'];
+    protected $disk    = 'public';
 
     protected $casts = [
         'main' => 'boolean'
@@ -48,6 +51,30 @@ class Video extends Entity implements Sortable
     public function getUrlAttribute()
     {
         return $this->getUrl();
+    }
+
+    public function pathInfo()
+    {
+        return pathinfo($this->getStorage()->path($this->getPath()));
+    }
+
+    public function setDisk($value)
+    {
+        $this->disk = $value;
+        return $this;
+    }
+
+    public function getDisk()
+    {
+        return $this->disk;
+    }
+
+    /**
+     * @return Filesystem
+     */
+    public function getStorage()
+    {
+        return Storage::disk($this->getDisk());
     }
 
     /**
@@ -127,17 +154,32 @@ class Video extends Entity implements Sortable
         return $this->getDir('_chunks');
     }
 
-    public function getPath($type = 'original')
+    public function getPath($type = 'original', $format = null)
     {
-        return $this->getDir($type) . '/' . $this->filename;
+        return $this->getDir($type) . '/' . $this->getFormatFilename($format);
     }
 
-    public function getUrl($preparedForEmbed = false)
+    public function getUrl($preparedForEmbed = false, $type = 'original', $format = null)
     {
         if ($url = $this->getRawOriginal('url'))
             return $preparedForEmbed ? $this->prepareForEmbed($url) : $url;
 
-        return static::url($this->getPath());
+        return static::url($this->getPath($type, $format));
+    }
+
+    public function getFormatFilename($format = null) : string|null
+    {
+        if (!$format)
+            return $this->filename;
+
+        $originalFormat = $this->format;
+
+        if (!$originalFormat) {
+            $info = $this->pathInfo();
+            return $info['filename'] . '.' . $format;
+        }
+
+        return preg_replace('/\.' . $originalFormat . '$/', '.' . $format, $this->filename);
     }
 
     public function remove()
@@ -260,7 +302,7 @@ class Video extends Entity implements Sortable
     public function getMimeTypeAttribute()
     {
         if ($this->isLocal())
-            return Storage::disk('public')->mimeType($this->getPath());
+            return $this->getStorage()->mimeType($this->getPath());
 
         $tmp = explode('.', $this->getUrl(true));
         $extension = end($tmp);
@@ -277,7 +319,13 @@ class Video extends Entity implements Sortable
 
     public static function createFFMpegResolver() : \FFMpeg\FFMpeg
     {
-        return \FFMpeg\FFMpeg::create([
+        static $resolver = null;
+
+        if ($resolver) {
+            return $resolver;
+        }
+
+        return $resolver = \FFMpeg\FFMpeg::create([
             'ffmpeg.binaries'  => config('video.ffmpeg_binaries'),
             'ffprobe.binaries' => config('video.ffprobe_binaries'),
             'timeout'          => 60,
@@ -285,9 +333,9 @@ class Video extends Entity implements Sortable
         ]);
     }
 
-    public function getFullPath($type = 'original')
+    public function getFullPath($type = 'original', $format = null)
     {
-        return \Storage::disk('public')->path($this->getPath($type));
+        return $this->getStorage()->path($this->getPath($type, $format));
     }
 
     /**
@@ -335,5 +383,23 @@ class Video extends Entity implements Sortable
         $frame->save($path = tempnam(sys_get_temp_dir(), 'laravel_app_'));
 
         return $path;
+    }
+
+    public function createExtraFormatFile(ExtraFormat $format, string $type = 'original')
+    {
+        $source = $this->getFullPath($type);
+
+        $info = pathinfo($source);
+
+        if (! isset($info['extension']))
+            return;
+
+        $ffmpeg = static::createFFMpegResolver();
+
+        $video = $ffmpeg->open($source);
+
+        $format->handle($video, $this);
+
+        $video->save($format->getFFmpegFormat(), $this->getFullPath($type, $format->getExtension()));
     }
 }

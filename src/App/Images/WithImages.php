@@ -213,7 +213,7 @@ trait WithImages
     /**
      * @return array
      */
-    public function extraFormats(): array
+    public function imageExtraFormats(): array
     {
         return config('media.image.extra_formats');
     }

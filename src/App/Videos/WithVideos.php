@@ -102,4 +102,12 @@ trait WithVideos
     {
         return $this->videos()->where('main', '=', '1')->first();
     }
+
+    /**
+     * @return array
+     */
+    public function videoExtraFormats(): array
+    {
+        return [];
+    }
 }

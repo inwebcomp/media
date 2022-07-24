@@ -315,7 +315,7 @@ class Image extends Entity implements Sortable
             $thumbnail->getFormat()
         );
 
-        if (count($object->extraFormats())) {
+        if (count($object->imageExtraFormats())) {
             if (isset($info['extension']) and $info['extension'] == 'png') {
                 $newImage = \Image::canvas($thumb->width(), $thumb->height(), '#ffffff');
                 $newImage->insert($thumb);
@@ -326,7 +326,7 @@ class Image extends Entity implements Sortable
             $thumbInfo = pathinfo($path);
             $formatlessPath = $thumbInfo['dirname'] . '/' . $thumbInfo['filename'];
 
-            foreach ($object->extraFormats() as $item) {
+            foreach ($object->imageExtraFormats() as $item) {
                 $format = $item['format'];
                 $quality = $item['quality'];
 
@@ -421,7 +421,7 @@ class Image extends Entity implements Sortable
             }
         }
 
-        foreach ($this->getObject()->extraFormats() as $format) {
+        foreach ($this->getObject()->imageExtraFormats() as $format) {
             $path = $this->getPath($name, $format['format']);
             if ($this->getStorage()->exists($path)) {
                 if (!$this->getStorage()->delete($path)) {

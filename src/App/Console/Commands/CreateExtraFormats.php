@@ -63,7 +63,7 @@ class CreateExtraFormats extends Command
             $storage = $image->getStorage();
 
             try {
-                foreach ($object->extraFormats() as $item) {
+                foreach ($object->imageExtraFormats() as $item) {
                     $format = $item['format'];
                     $quality = $item['quality'];
 

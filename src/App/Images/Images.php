@@ -174,7 +174,7 @@ class Images extends MorphMany
             $image->save();
 
             if ($image->format) {
-                foreach ($object->extraFormats() as $item) {
+                foreach ($object->imageExtraFormats() as $item) {
                     $format = $item['format'];
                     $quality = $item['quality'];
                     $image->createExtraFormatFile($format, $quality, 'original');
@@ -252,7 +252,7 @@ class Images extends MorphMany
             }
         }
 
-        foreach ($object->extraFormats() as $format) {
+        foreach ($object->imageExtraFormats() as $format) {
             $path = $image->getPath('original', $format['format']);
 
             if ($this->getStorage()->exists($path)) {
