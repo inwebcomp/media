@@ -21,12 +21,12 @@
         "laravel/legacy-factories": "^1.1"
     },
     "require-dev": {
-        "facade/ignition": "^2.5",
-        "fakerphp/faker": "^1.9.1",
-        "laravel/sail": "^1.0.1",
-        "mockery/mockery": "^1.4.4",
-        "nunomaduro/collision": "^5.10",
-        "phpunit/phpunit": "^9.5.10"
+        "facade/ignition": "^2.17.6",
+        "fakerphp/faker": "^v1.20.0",
+        "laravel/sail": "^v1.15.1",
+        "mockery/mockery": "^1.5.0",
+        "nunomaduro/collision": "^v6.2.1",
+        "phpunit/phpunit": "^9.5.21"
     },
     "autoload": {
         "psr-4": {
