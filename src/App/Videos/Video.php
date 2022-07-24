@@ -275,6 +275,21 @@ class Video extends Entity implements Sortable
         return null;
     }
 
+    public static function createFFMpegResolver() : \FFMpeg\FFMpeg
+    {
+        return \FFMpeg\FFMpeg::create([
+            'ffmpeg.binaries'  => config('video.ffmpeg_binaries'),
+            'ffprobe.binaries' => config('video.ffprobe_binaries'),
+            'timeout'          => 60,
+            'ffmpeg.threads'   => 16,
+        ]);
+    }
+
+    public function getFullPath($type = 'original')
+    {
+        return \Storage::disk('public')->path($this->getPath($type));
+    }
+
     /**
      * @param int $frames
      * @param float $startFromTime
@@ -282,14 +297,9 @@ class Video extends Entity implements Sortable
      */
     public function createFramesFromFile($frames = 4, $startFromTime = 1)
     {
-        $videoPath = storage_path('app/public/' . $this->getPath());
+        $ffmpeg = static::createFFMpegResolver();
 
-        $ffmpeg = \FFMpeg\FFMpeg::create([
-            'ffmpeg.binaries'  => config('video.ffmpeg_binaries'),
-            'ffprobe.binaries' => config('video.ffprobe_binaries'),
-            'timeout'          => 60,
-            'ffmpeg.threads'   => 16,
-        ]);
+        $videoPath = $this->getFullPath();
 
         /** @var \FFMpeg\Media\Video $ffVideo */
         $ffVideo = $ffmpeg->open($videoPath);
@@ -314,14 +324,9 @@ class Video extends Entity implements Sortable
      */
     public function getFrame($fromSeconds = 0)
     {
-        $videoPath = storage_path('app/public/' . $this->getPath());
+        $ffmpeg = static::createFFMpegResolver();
 
-        $ffmpeg = \FFMpeg\FFMpeg::create([
-            'ffmpeg.binaries'  => config('video.ffmpeg_binaries'),
-            'ffprobe.binaries' => config('video.ffprobe_binaries'),
-            'timeout'          => 60,
-            'ffmpeg.threads'   => 16,
-        ]);
+        $videoPath = $this->getFullPath();
 
         /** @var \FFMpeg\Media\Video $ffVideo */
         $ffVideo = $ffmpeg->open($videoPath);
