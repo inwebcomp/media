@@ -110,4 +110,22 @@ trait WithVideos
     {
         return [];
     }
+
+    /**
+     * @return Variant[]
+     */
+    public function getVideoVariants() : array
+    {
+        return [];
+    }
+
+    public function getVideoVariant(string $variant) : ?Variant
+    {
+        return $this->getVideoVariants()[$variant] ?? null;
+    }
+
+    public function videoVariantExists(string $variant) : bool
+    {
+        return isset($this->getVideoVariants()[$variant]);
+    }
 }

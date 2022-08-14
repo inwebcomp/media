@@ -18,7 +18,8 @@
     "require": {
         "php": "^7.1|^8.0",
         "intervention/image": "^2.7",
-        "laravel/legacy-factories": "^1.1"
+        "laravel/legacy-factories": "^1.1",
+        "php-ffmpeg/php-ffmpeg": "dev-master"
     },
     "require-dev": {
         "facade/ignition": "^2.17.6",

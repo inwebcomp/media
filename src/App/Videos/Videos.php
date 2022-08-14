@@ -99,12 +99,17 @@ class Videos extends MorphMany
     /**
      * @param UploadedFile|string $video
      * @param null|string $filename
+     * @param bool $createVariants
      * @return Video
+     * @throws \Exception
      */
-    public function add($video, $filename = null)
+    public function add($video, $filename = null, $createVariants = true)
     {
         $object = $this->getObject();
 
+        /**
+         * @var Video $video
+         */
         $video = call_user_func([$object->videoModel(), 'new'], $video, $filename);
         $video->associateWith($object);
 
@@ -135,13 +140,32 @@ class Videos extends MorphMany
 
         $video->save();
 
-        if ($video->format) {
-            foreach ($object->videoExtraFormats() as $format) {
-                $video->createExtraFormatFile($format, 'original');
+        if ($video->isLocal()) {
+            try {
+                if ($video->format) {
+                    foreach ($object->videoExtraFormats() as $format) {
+                        if (! $format->isForOriginal())
+                            continue;
+
+                        if ($video->format == $format->getExtension())
+                            continue;
+
+                        $video->createExtraFormatFile($format, 'original');
+                    }
+                }
+
+                if ($createVariants) {
+                    $video->createVariants();
+                }
+
+                event(new VideoAdded($video));
+
+            } catch (\Exception $exception) {
+                $video->delete();
+
+                throw $exception;
             }
         }
-
-        event(new VideoAdded($video));
 
         return $video;
     }
@@ -150,9 +174,10 @@ class Videos extends MorphMany
      * @param UploadedFile $video
      * @param bool $last
      * @param null|string $filename
+     * @param bool $createVariants
      * @return Video
      */
-    public function addChunked($video, $last = false, $filename = null)
+    public function addChunked($video, $last = false, $filename = null, $createVariants = true)
     {
         $storage = $this->getStorage();
 
@@ -197,8 +222,18 @@ class Videos extends MorphMany
 
                 if ($video->format) {
                     foreach ($object->videoExtraFormats() as $format) {
+                        if (! $format->isForOriginal())
+                            continue;
+
+                        if ($video->format == $format->getExtension())
+                            continue;
+
                         $video->createExtraFormatFile($format, 'original');
                     }
+                }
+
+                if ($createVariants) {
+                    $video->createVariants();
                 }
 
                 return $video;
@@ -207,6 +242,8 @@ class Videos extends MorphMany
             if ($storage->exists($path)) {
                 $storage->delete($path);
             }
+
+            $video->delete();
 
             throw $exception;
         }
@@ -256,6 +293,9 @@ class Videos extends MorphMany
         });
     }
 
+    /**
+     * @throws \Exception
+     */
     public function remove($video)
     {
         $object = $this->getObject();
@@ -266,7 +306,24 @@ class Videos extends MorphMany
 
         Storage::disk('public')->delete($video->getPath());
 
+        foreach ($object->videoExtraFormats() as $format) {
+            $path = $video->getPath('original', $format->getExtension());
+
+            if ($this->getStorage()->exists($path)) {
+                if (! $this->getStorage()->delete($path)) {
+                    throw new \Exception("Can't delete video file");
+                }
+            }
+        }
+
+        $video->removeVariants();
+
+        $wasMain = $video->fresh()->isMain();
+
         $video->delete();
+
+        if ($wasMain and $first = $object->fresh()->videos->first())
+            $first->setMain();
 
         event(new VideoRemoved($video));
     }

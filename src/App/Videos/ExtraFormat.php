@@ -6,28 +6,26 @@ use FFMpeg\Format\Video\DefaultVideo;
 use FFMpeg\Format\Video\WebM;
 use FFMpeg\Format\Video\WMV;
 use FFMpeg\Format\Video\X264;
-use function PHPUnit\Framework\matches;
 
 class ExtraFormat
 {
-    private \Closure     $handler;
     private DefaultVideo|\Closure $format;
+    private ?string               $extension;
+    private ?\Closure             $modifier;
+    private bool                  $notForOriginal = false;
 
-    /**
-     * @var string|null
-     */
-    private ?string $extension;
-
-    public function __construct(DefaultVideo|\Closure $format, $handler, $extension = null)
+    public function __construct(DefaultVideo|\Closure $format, $extension = null, $modifier = null)
     {
-        $this->handler = $handler;
+        $this->modifier = $modifier;
         $this->format = $format;
         $this->extension = $extension;
     }
 
     public function handle(\FFMpeg\Media\Video $video, Video $model) : void
     {
-        ($this->handler)($video, $model);
+        if ($this->modifier) {
+            ($this->modifier)($video, $model);
+        }
     }
 
     public function getFFmpegFormat() : DefaultVideo
@@ -50,5 +48,17 @@ class ExtraFormat
             X264::class => 'mp4',
             WMV::class => 'wmv',
         };
+    }
+
+    public function notForOriginal() : static
+    {
+        $this->notForOriginal = true;
+
+        return $this;
+    }
+
+    public function isForOriginal() : bool
+    {
+        return ! $this->notForOriginal;
     }
 }

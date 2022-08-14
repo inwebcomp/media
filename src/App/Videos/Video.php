@@ -2,10 +2,14 @@
 
 namespace InWeb\Media\Videos;
 
+use Exception;
+use FFMpeg\Format\FormatInterface;
+use FFMpeg\Format\Video\WebM;
+use FFMpeg\Format\Video\WMV;
+use FFMpeg\Format\Video\X264;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use InWeb\Base\Entity;
@@ -139,22 +143,17 @@ class Video extends Entity implements Sortable
         return $image;
     }
 
-    /**
-     * @param string $type
-     * @return string
-     * @todo Remove type attribute
-     */
-    public function getDir($type = 'original')
+    public function getDir(?string $type = 'original') : string
     {
         return $this->object->getVideoDir($type);
     }
 
-    public function getChunksDirectory()
+    public function getChunksDirectory() : string
     {
         return $this->getDir('_chunks');
     }
 
-    public function getPath($type = 'original', $format = null)
+    public function getPath($type = 'original', $format = null) : string
     {
         return $this->getDir($type) . '/' . $this->getFormatFilename($format);
     }
@@ -169,12 +168,12 @@ class Video extends Entity implements Sortable
 
     public function getFormatFilename($format = null) : string|null
     {
-        if (!$format)
+        if (! $format)
             return $this->filename;
 
         $originalFormat = $this->format;
 
-        if (!$originalFormat) {
+        if (! $originalFormat) {
             $info = $this->pathInfo();
             return $info['filename'] . '.' . $format;
         }
@@ -225,7 +224,7 @@ class Video extends Entity implements Sortable
             } else {
                 return false;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return false;
         }
     }
@@ -299,10 +298,10 @@ class Video extends Entity implements Sortable
         return $url;
     }
 
-    public function getMimeTypeAttribute()
+    public function getMimeTypeAttribute($type = 'original', $format = null) : string|false|null
     {
         if ($this->isLocal())
-            return $this->getStorage()->mimeType($this->getPath());
+            return $this->getStorage()->mimeType($this->getPath($type, $format));
 
         $tmp = explode('.', $this->getUrl(true));
         $extension = end($tmp);
@@ -401,5 +400,169 @@ class Video extends Entity implements Sortable
         $format->handle($video, $this);
 
         $video->save($format->getFFmpegFormat(), $this->getFullPath($type, $format->getExtension()));
+    }
+
+    /**
+     * @param string $name
+     * @param \Closure|null $modifier
+     * @return false|\FFMpeg\Media\Video
+     * @throws Exception
+     */
+    public function createVariant(string $name, \Closure $modifier = null) : bool|\FFMpeg\Media\Video
+    {
+        $this->assertVariantExists($name);
+
+        /** @var WithVideos|Entity $object */
+        $object = $this->object;
+        $variantDefinition = $object->getVideoVariant($name);
+
+        if (! $variantDefinition->shouldCreateVariant($object, $this))
+            return false;
+
+        if ($variantDefinition->isOnlyForMain() and ! $this->isMain())
+            return false;
+
+        $function = $modifier ?? $variantDefinition->getModifier();
+
+        $storage = $this->getStorage();
+
+        $storage->makeDirectory($this->getDir($name));
+
+        $source = $this->getFullPath();
+
+        $info = pathinfo($source);
+
+        $ffmpeg = static::createFFMpegResolver();
+
+        $video = $ffmpeg->open($source);
+
+        $path = $this->getFullPath($name);
+
+        $function($video, $this);
+
+        $format = $this->getFFmpegFormatFromExtension($info['extension']);
+
+        $formatFunction = $variantDefinition->getFormatModifier();
+
+        if ($formatFunction) {
+            $format = $formatFunction($format);
+        }
+
+        $video->save($format, $path);
+
+        if (count($object->videoExtraFormats())) {
+            foreach ($object->videoExtraFormats() as $format) {
+                if (($info['extension'] ?? null) == $format->getExtension())
+                    continue;
+
+                $this->createExtraFormatFile($format, $name);
+            }
+        }
+
+        return $video;
+    }
+
+    public function getFFmpegFormatFromExtension($extension) : FormatInterface
+    {
+        return match ($extension) {
+            'webm' => new WebM(),
+            'mp4' => new X264(),
+            'wmv' => new WMV(),
+        };
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function createVariants()
+    {
+        foreach ($this->object->getVideoVariants() as $name => $variant) {
+            $this->createVariant($name);
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function createMainVariants()
+    {
+        foreach ($this->object->getVideoVariants() as $name => $variant) {
+            if ($variant->isOnlyForMain())
+                $this->createVariant($name);
+        }
+    }
+
+    /**
+     * @param $name
+     * @return bool
+     * @throws Exception
+     */
+    public function removeVariant($name) : bool
+    {
+        $this->assertVariantExists($name);
+
+        $path = $this->getPath($name);
+        if ($this->getStorage()->exists($path)) {
+            if (! $this->getStorage()->delete($path)) {
+                throw new Exception("Can't delete image file");
+            }
+        }
+
+        foreach ($this->object->videoExtraFormats() as $format) {
+            $path = $this->getPath($name, $format->getExtension());
+            if ($this->getStorage()->exists($path)) {
+                if (! $this->getStorage()->delete($path)) {
+                    throw new Exception("Can't delete image file");
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function removeVariants() : void
+    {
+        foreach ($this->object->getVideoVariants() as $name => $variant) {
+            $this->removeVariant($name);
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function removeMainVariants() : void
+    {
+        foreach ($this->object->getVideoVariants() as $name => $variant) {
+            if ($variant->isOnlyForMain())
+                $this->removeVariant($name);
+        }
+    }
+
+    /**
+     * @param $name
+     * @return bool|\FFMpeg\Media\Video
+     * @throws Exception
+     */
+    public function recreateVariant($name) : \FFMpeg\Media\Video|bool
+    {
+        $this->assertVariantExists($name);
+
+        return $this->createVariant($name);
+    }
+
+    /**
+     * @param $name
+     * @throws Exception
+     */
+    public function assertVariantExists($name) : void
+    {
+        if (! $this->object->videoVariantExists($name)) {
+            throw new Exception(
+                'Video variant with name "' . $name . '" does not exists at model ' . $this->object->getMorphClass()
+            );
+        }
     }
 }
